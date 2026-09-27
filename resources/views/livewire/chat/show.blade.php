@@ -31,6 +31,8 @@
                 <span class="badge hidden sm:inline-flex {{ $order->status->badgeClasses() }}">{{ $order->status->getLabel() }}</span>
             </header>
 
+            <livewire:order-workflow :order="$order" :return-url="route('chats.show', $conversation)" compact :key="'workflow-'.$order->id.'-'.$order->status->value" />
+
             <div class="flex-1 space-y-3 overflow-y-auto bg-canvas/60 px-4 py-5 sm:px-5"
                  x-data="{ scroll() { this.$el.scrollTop = this.$el.scrollHeight } }"
                  x-init="scroll()" x-on:chat-scroll.window="$nextTick(() => scroll())"

@@ -32,4 +32,9 @@
             <button type="submit" class="btn-primary px-6" wire:loading.attr="disabled">Сохранить</button>
         </div>
     </form>
+
+    <section class="mt-8" aria-labelledby="reviews-title">
+        <h2 id="reviews-title" class="text-xl font-extrabold tracking-tight">Отзывы заказчиков</h2>
+        <x-review-list :reviews="$this->reviews" class="mt-4" />
+    </section>
 </div>

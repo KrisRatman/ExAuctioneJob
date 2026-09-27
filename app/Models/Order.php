@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Задача заказчика. Пока статус open — принимает предложения исполнителей.
  */
-#[Fillable(['customer_id', 'executor_id', 'title', 'description', 'starting_price', 'status', 'accepted_at', 'cancelled_at'])]
+#[Fillable(['customer_id', 'executor_id', 'title', 'description', 'starting_price', 'status', 'accepted_at', 'delivered_at', 'completed_at', 'cancelled_at'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -37,6 +37,8 @@ class Order extends Model
             'status' => OrderStatus::class,
             'starting_price' => 'integer',
             'accepted_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
     }
@@ -77,9 +79,37 @@ class Order extends Model
         return $this->hasOne(Bid::class)->where('status', 'accepted');
     }
 
+    /** @return HasMany<Dispute, $this> */
+    public function disputes(): HasMany
+    {
+        return $this->hasMany(Dispute::class);
+    }
+
+    /**
+     * Последний спор — открытый или решённый.
+     *
+     * @return HasOne<Dispute, $this>
+     */
+    public function latestDispute(): HasOne
+    {
+        return $this->hasOne(Dispute::class)->latestOfMany();
+    }
+
+    /** @return HasOne<Review, $this> */
+    public function review(): HasOne
+    {
+        return $this->hasOne(Review::class);
+    }
+
     public function isOpen(): bool
     {
         return $this->status === OrderStatus::Open;
+    }
+
+    /** Заказчик может оценить исполнителя: заказ подтверждён, отзыва ещё нет. Связь review должна быть загружена. */
+    public function canBeReviewed(): bool
+    {
+        return $this->status === OrderStatus::Completed && $this->review === null;
     }
 
     /** Максимальная цена, которую может предложить исполнитель. */

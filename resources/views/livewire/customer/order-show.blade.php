@@ -46,6 +46,10 @@
                         </a>
                     @endif
                 </div>
+
+                <div class="mt-4">
+                    <livewire:order-workflow :order="$order" :return-url="route('customer.orders.show', $order)" :key="'workflow-'.$order->id.'-'.$order->status->value" />
+                </div>
             @endif
 
             @if ($order->isOpen())
@@ -111,6 +115,10 @@
                                             <span class="tag">{{ $tag->name }}</span>
                                         @endforeach
                                     </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-extrabold uppercase tracking-wide text-slate-400">Отзывы заказчиков</h3>
+                                    <x-review-list :reviews="$bid->executor->reviewsReceived" class="mt-2" />
                                 </div>
                                 @if ($order->isOpen() && $bid->status === \App\Enums\BidStatus::Pending)
                                     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">

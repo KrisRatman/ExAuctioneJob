@@ -3,6 +3,7 @@
 namespace App\Livewire\Executor;
 
 use App\Models\Category;
+use App\Models\Review;
 use App\Support\TagRules;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -43,6 +44,13 @@ class EditProfile extends Component
     public function tree(): Collection
     {
         return Category::tree();
+    }
+
+    /** @return Collection<int, Review> */
+    #[Computed]
+    public function reviews(): Collection
+    {
+        return auth()->user()->reviewsReceived()->with('customer')->latest()->limit(20)->get();
     }
 
     public function save(): void

@@ -40,7 +40,12 @@ class OrderShow extends Component
     public function bids(): Collection
     {
         return $this->order->bids()
-            ->with(['executor.executorProfile', 'executor.categories'])
+            ->with([
+                'executor.executorProfile',
+                'executor.categories',
+                // Последние отзывы — в развёрнутой карточке исполнителя.
+                'executor.reviewsReceived' => fn ($q) => $q->with('customer')->latest()->limit(3),
+            ])
             // Сначала принятое, потом ждущие решения, отклонённые — в конце.
             ->orderByRaw('case status when ? then 0 when ? then 1 else 2 end', [BidStatus::Accepted->value, BidStatus::Pending->value])
             ->oldest()

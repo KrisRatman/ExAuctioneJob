@@ -4,7 +4,11 @@ namespace Database\Seeders;
 
 use App\Actions\AcceptBid;
 use App\Actions\CancelOrder;
+use App\Actions\ConfirmCompletion;
 use App\Actions\CreateOrder;
+use App\Actions\DeliverOrder;
+use App\Actions\LeaveReview;
+use App\Actions\OpenDispute;
 use App\Actions\PlaceBid;
 use App\Actions\SendMessage;
 use App\Enums\UserRole;
@@ -122,8 +126,47 @@ class DemoSeeder extends Seeder
             ['executor', 'Принято. Первую версию покажу через 5 дней.'],
         ]);
 
+        // Кафе: исполнитель сдал работу, заказчица не согласна — спор ждёт администратора.
+        app(DeliverOrder::class)->handle($executors['sergey@example.com'], $cafeSite);
+        $this->chat($cafeChat, [
+            ['executor', 'Готово: сайт на тестовом домене, QR-коды в архиве. Отметил работу сданной.'],
+            ['customer', 'Админки для изменения цен нет, а она была в задаче. И QR-кодов 10, а не 12.'],
+            ['executor', 'Админка не входила в сумму, это отдельная работа.'],
+        ]);
+        app(OpenDispute::class)->handle($cafeSite->customer()->firstOrFail(), $cafeSite,
+            'В задаче явно указана админка для изменения позиций меню — её нет. QR-кодов 10 вместо 12. Исполнитель отказывается доделывать.');
+
+        // Монтаж: сдан, принят и оценён.
         $video = Order::query()->where('title', 'like', 'Смонтировать%')->firstOrFail();
-        app(AcceptBid::class)->handle($video->customer()->firstOrFail(), $video->bids()->firstOrFail());
+        $videoChat = app(AcceptBid::class)->handle($video->customer()->firstOrFail(), $video->bids()->firstOrFail());
+        $this->completeWithReview($videoChat, 5, 'Отличный монтаж, уложился в срок, учёл все правки.');
+
+        // История выполненных заказов — у исполнителей в карточках появляются рейтинг и отзывы.
+        $history = [
+            ['igor@example.com', 'executor@example.com', 'Вёрстка корпоративного сайта по макету', 30000, ['Вёрстка (HTML/CSS/JS)'], 5, 'Сделано аккуратно, адаптив идеальный. Рекомендую.'],
+            ['coffee@example.com', 'executor@example.com', 'Интернет-магазин кофе на WooCommerce', 45000, ['WooCommerce'], 4, 'Всё работает, но сроки немного сдвинулись.'],
+            ['igor@example.com', 'executor@example.com', 'Лендинг для онлайн-курса на Laravel', 20000, ['Laravel'], 5, null],
+            ['coffee@example.com', 'artem@example.com', 'Ускорить сайт на WordPress', 9000, ['WordPress'], 4, 'Сайт стал грузиться заметно быстрее.'],
+            ['igor@example.com', 'maria@example.com', 'Дизайн лендинга в Figma', 18000, ['Веб-дизайн (Figma)'], 5, 'Очень красиво и с UI-kit, как договаривались.'],
+            ['coffee@example.com', 'kate@example.com', 'Тексты для сайта кофейни', 5000, ['Тексты для сайтов'], 3, 'Тексты хорошие, но пришлось дважды просить правки.'],
+        ];
+
+        foreach ($history as $index => [$customerEmail, $executorEmail, $title, $price, $tagNames, $rating, $comment]) {
+            $order = app(CreateOrder::class)->handle($customers->firstWhere('email', $customerEmail), [
+                'title' => $title,
+                'description' => 'Выполненный заказ из истории демо-биржи.',
+                'starting_price' => $price,
+                'category_ids' => collect($tagNames)->map(fn (string $name) => $this->tags[$name]->id)->all(),
+            ]);
+            $bid = app(PlaceBid::class)->handle($executors[$executorEmail], $order, [
+                'offer_price' => $price,
+                'approach_description' => $this->approach(7),
+                'duration_days' => 7,
+            ]);
+            $chat = app(AcceptBid::class)->handle($order->customer()->firstOrFail(), $bid);
+            $this->completeWithReview($chat, $rating, $comment);
+            $this->age($order, hours: 24 * (40 - $index * 5));
+        }
 
         // Заказчик из демо-доступа тоже сразу видит чат: принимает Дмитрия по WooCommerce.
         $shop = Order::query()->where('title', 'like', 'Доработать интернет-магазин%')->firstOrFail();
@@ -156,6 +199,16 @@ class DemoSeeder extends Seeder
         $user->categories()->attach(collect($tagNames)->map(fn (string $tag) => $this->tags[$tag]->id));
 
         return $user;
+    }
+
+    /** Сдать, принять и оценить заказ — как это сделали бы стороны на сайте. */
+    private function completeWithReview(Conversation $conversation, int $rating, ?string $comment): void
+    {
+        $conversation->loadMissing(['order', 'customer', 'executor']);
+
+        app(DeliverOrder::class)->handle($conversation->executor, $conversation->order);
+        app(ConfirmCompletion::class)->handle($conversation->customer, $conversation->order);
+        app(LeaveReview::class)->handle($conversation->customer, $conversation->order, $rating, $comment);
     }
 
     /** @param  list<array{0: 'customer'|'executor', 1: string}>  $lines */

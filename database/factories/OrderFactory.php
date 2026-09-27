@@ -49,6 +49,22 @@ class OrderFactory extends Factory
         ]);
     }
 
+    /** Исполнитель сдал работу, заказчик ещё не проверил. */
+    public function delivered(?User $executor = null): static
+    {
+        return $this->inProgress($executor)->state(['status' => OrderStatus::Delivered, 'delivered_at' => now()]);
+    }
+
+    public function completed(?User $executor = null): static
+    {
+        return $this->delivered($executor)->state(['status' => OrderStatus::Completed, 'completed_at' => now()]);
+    }
+
+    public function disputed(?User $executor = null): static
+    {
+        return $this->delivered($executor)->state(['status' => OrderStatus::Disputed]);
+    }
+
     public function cancelled(): static
     {
         return $this->state(['status' => OrderStatus::Cancelled, 'cancelled_at' => now()]);

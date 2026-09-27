@@ -79,6 +79,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Bid::class, 'executor_id');
     }
 
+    /**
+     * Отзывы о работе исполнителя.
+     *
+     * @return HasMany<Review, $this>
+     */
+    public function reviewsReceived(): HasMany
+    {
+        return $this->hasMany(Review::class, 'executor_id');
+    }
+
     /** Приватный канал пользователя для уведомлений и сообщений чата. */
     public function receivesBroadcastNotificationsOn(): string
     {

@@ -15,6 +15,9 @@ use Illuminate\Notifications\Notification;
  */
 abstract class SiteNotification extends Notification
 {
+    /** Получатель — для текста и ссылки, которые зависят от роли (заказчик или исполнитель). */
+    protected User $recipient;
+
     /** Заголовок в колокольчике. */
     abstract protected function title(): string;
 
@@ -48,6 +51,8 @@ abstract class SiteNotification extends Notification
      */
     public function toArray(User $notifiable): array
     {
+        $this->recipient = $notifiable;
+
         return [
             'title' => $this->title(),
             'body' => $this->body(),
