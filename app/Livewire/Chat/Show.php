@@ -32,6 +32,10 @@ class Show extends Component
 
     public string $body = '';
 
+    /** Последнее сообщение на экране — по нему запасной опрос понимает, пришло ли новое. */
+    #[Locked]
+    public ?int $lastShownMessageId = null;
+
     public function mount(Conversation $conversation, MarkConversationRead $markRead): void
     {
         // Чужой чат — как несуществующий.
@@ -88,9 +92,28 @@ class Show extends Component
         $this->dispatch('chat-scroll');
     }
 
+    /**
+     * Запасной канал, когда WebSocket недоступен (Reverb не запущен или хостинг его не держит):
+     * страница раз в несколько секунд спрашивает, нет ли новых сообщений.
+     */
+    public function poll(MarkConversationRead $markRead): void
+    {
+        if ($this->conversation->messages()->max('id') === $this->lastShownMessageId) {
+            $this->skipRender();
+
+            return;
+        }
+
+        $markRead->handle(auth()->user(), $this->conversation);
+        unset($this->messages, $this->conversations);
+        $this->dispatch('chat-read');
+        $this->dispatch('chat-scroll');
+    }
+
     public function render(): View
     {
         $this->conversation->loadMissing(['order', 'customer', 'executor']);
+        $this->lastShownMessageId = $this->messages->last()?->id;
 
         return view('livewire.chat.show')
             ->title('Чат: '.$this->conversation->order->title);

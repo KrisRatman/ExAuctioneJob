@@ -1,9 +1,12 @@
 <?php
 
+use App\Actions\SendMessage;
 use App\Enums\BidStatus;
+use App\Livewire\Chat\Show;
 use App\Livewire\Executor\Feed;
 use App\Livewire\Executor\MyBids;
 use App\Models\Bid;
+use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\User;
 use Livewire\Livewire;
@@ -59,4 +62,52 @@ it('shows the mobile tab bar only to customers and executors', function () {
 
 it('does not show the mobile tab bar to guests', function () {
     $this->get('/')->assertDontSee('aria-label="Разделы"', false);
+});
+
+it('logs into demo accounts with one click on the demo stand', function (string $role, string $email, string $home) {
+    config(['ideajob.demo' => true]);
+    $user = User::factory()->create(['email' => $email, 'role' => $role]);
+
+    $this->get('/login')->assertSee('Демо-стенд');
+    $this->post("/demo/login/{$role}")->assertRedirect($home);
+
+    $this->assertAuthenticatedAs($user);
+})->with([
+    'customer' => ['customer', 'customer@example.com', '/my/orders'],
+    'executor' => ['executor', 'executor@example.com', '/feed'],
+]);
+
+it('has no one-click login outside the demo stand', function () {
+    config(['ideajob.demo' => false]);
+    User::factory()->customer()->create(['email' => 'customer@example.com']);
+
+    $this->get('/login')->assertDontSee('Демо-стенд');
+    $this->post('/demo/login/customer')->assertNotFound();
+    $this->assertGuest();
+});
+
+it('never logs into the admin with one click', function () {
+    config(['ideajob.demo' => true]);
+    User::factory()->admin()->create(['email' => 'admin@example.com']);
+
+    $this->post('/demo/login/admin')->assertNotFound();
+    $this->assertGuest();
+});
+
+it('picks up new chat messages by polling when WebSocket is unavailable', function () {
+    $customer = User::factory()->customer()->create();
+    $executor = User::factory()->executor()->create();
+    $conversation = Conversation::factory()->between($customer, $executor)->create();
+
+    $component = Livewire::actingAs($customer)->test(Show::class, ['conversation' => $conversation]);
+
+    $component->call('poll')->assertNotDispatched('chat-scroll');
+
+    app(SendMessage::class)->handle($executor, $conversation, 'Пришло без WebSocket');
+
+    $component->call('poll')
+        ->assertSee('Пришло без WebSocket')
+        ->assertDispatched('chat-scroll');
+
+    expect($customer->unreadMessagesCount())->toBe(0);
 });

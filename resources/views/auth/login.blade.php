@@ -18,13 +18,22 @@
         </form>
 
         @if (config('ideajob.demo'))
-            <div class="card mt-6 p-5 text-sm text-slate-600">
-                <div class="font-bold text-ink">Демо-доступы (пароль у всех — <code>password</code>)</div>
-                <ul class="mt-2 space-y-1">
-                    <li>Заказчик — <code>customer@example.com</code></li>
-                    <li>Исполнитель — <code>executor@example.com</code></li>
-                    <li>Админ — <code>admin@example.com</code> (панель <code>/admin</code>)</li>
-                </ul>
+            <div class="card mt-6 p-5" data-demo>
+                <div class="text-sm font-bold">Демо-стенд: войти одним кликом</div>
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                    @foreach (['customer' => ['Заказчик', 'heroicon-o-clipboard-document-list'], 'executor' => ['Исполнитель', 'heroicon-o-wrench-screwdriver']] as $role => [$label, $icon])
+                        <form method="post" action="{{ route('demo.login', $role) }}">
+                            @csrf
+                            <button type="submit" class="btn-secondary w-full">
+                                <x-dynamic-component :component="$icon" class="size-4 text-slate-400" /> {{ $label }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+                <p class="mt-3 text-xs text-slate-500">
+                    Или вручную, пароль у всех <code>password</code>: <code>customer@example.com</code>, <code>executor@example.com</code>.
+                    Админка — <a href="{{ url('/admin') }}" class="font-semibold text-brand-600">/admin</a>, <code>admin@example.com</code>.
+                </p>
             </div>
         @endif
     </div>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\HomeController;
 use App\Livewire\Chat\Index as ChatIndex;
 use App\Livewire\Chat\Show as ChatShow;
@@ -19,6 +20,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+    Route::post('/demo/login/{role}', DemoLoginController::class)->middleware('throttle:30,1')->name('demo.login');
 });
 
 Route::middleware('auth')->group(function () {

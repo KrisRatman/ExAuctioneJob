@@ -1,58 +1,160 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# IdeaJob — биржа услуг «аукцион наоборот» на Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Заказчик публикует задачу и называет стартовую цену, а исполнители сами предлагают свою цену, срок и подход к работе. Заказ видят только специалисты с подходящими тегами. Заказчик сравнивает предложения по цене, сроку и рейтингу, выбирает исполнителя — и дальше они общаются в чате в реальном времени. Работу исполнитель сдаёт через площадку, заказчик подтверждает её или открывает спор, который решает администратор.
 
-## About Laravel
+![Лента заказов исполнителя](docs/screenshots/02-feed.png)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Возможности
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Заказчик**
+- Регистрация в одну форму, выбор роли на ней же.
+- Создание заказа: название, описание, 1–3 тега из дерева категорий, стартовая цена.
+- Список своих заказов: «N исполнителей готовы взяться», вкладки «Активные / Архив».
+- Карточка заказа в две колонки: слева задача, справа предложения с ценой, сроком, средним рейтингом и числом выполненных заказов. По клику — подход исполнителя к задаче, его анкета, теги и последние отзывы.
+- «Принять исполнителя» — заказ уходит в работу, остальным приходит отказ, открывается чат.
+- Подтверждение сданной работы или спор с причиной, оценка исполнителя 1–5 звёзд с отзывом.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Исполнитель**
+- Регистрация с анкетой «о себе» и тегами специализации.
+- Лента только тех заказов, где совпал хотя бы один тег: фильтр по своим тегам со счётчиками, поиск.
+- Предложение в модальном окне: цена (не выше стартовой + 1000 ₽ — проверяется и в браузере, и на сервере), срок, описание подхода. Повторное открытие — правка своего предложения.
+- «Мои предложения» с вкладками «Активные / Архив», профиль с отзывами.
+- «Сдать работу» в чате.
 
-## Learning Laravel
+**Общее**
+- Чат 1:1 по заказу: отметки о прочтении, бейдж непрочитанных, новые сообщения без перезагрузки.
+- Колокольчик уведомлений: новое предложение, «вас приняли на заказ», «заказ отдан другому», работа сдана и принята, спор открыт и решён, новая оценка. Клик ведёт туда, где нужно действовать.
+- Адаптивная вёрстка: на телефоне — нижняя панель вкладок и окно предложения снизу экрана.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+**Администратор (Filament)**
+- Дерево категорий и тегов: разделы и теги, используемый тег удалить нельзя.
+- Споры: причина, заказ, принятое предложение и вся переписка из чата. Решения «вернуть в работу», «засчитать выполненным», «отменить заказ» — с комментарием, который получают обе стороны.
+- Пользователи с анкетами и тегами, заказы с предложениями, модерация отзывов (удаление пересчитывает рейтинг).
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Стек
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Laravel 13 · PHP 8.4 · MySQL 8 · Livewire 4 · Filament 5 · Tailwind CSS 4 · Laravel Reverb + Laravel Echo · Pest 5
 
-## Agentic Development
+## Как устроено
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Аукцион и статусы заказа
 
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+open ──(заказчик принял предложение)──▶ in_progress ──(исполнитель сдал)──▶ delivered
+  │                                          ▲                                 │
+  └──(заказчик отменил)──▶ cancelled         │                  ┌──────────────┴──────────────┐
+                                             │           (подтвердил)                  (открыл спор)
+                                             │                  ▼                             ▼
+                                             │             completed ──▶ оценка          disputed
+                                             │                                                │
+                                             └───────────── вернуть в работу ◀── решение администратора
+                                                                              засчитать / отменить ──▶ resolved
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+- Каждый переход — отдельное действие в `app/Actions` (`PlaceBid`, `AcceptBid`, `DeliverOrder`, `ConfirmCompletion`, `OpenDispute`, `ResolveDispute`, `LeaveReview`, `CancelOrder`). Внутри — транзакция с блокировкой строки заказа: два одновременных «Принять исполнителя» или ставка в уже закрытый заказ не проходят.
+- Ограничение «не выше стартовой цены + 1000 ₽» проверяется трижды: в браузере (кнопка блокируется), в валидации формы и в самом `PlaceBid` — обойти его запросом в обход формы нельзя.
+- Совпадение тегов — scope `Order::matchingExecutor()`: заказ виден исполнителю, если пересечение тегов заказа и анкеты не пусто. Теги — фиксированное дерево из двух уровней, пользователи только выбирают.
+- Рейтинг — кэш в анкете исполнителя (`rating_avg`, `reviews_count`, `completed_orders_count`), пересчитывается обсервером при новом или удалённом отзыве. Заказы, закрытые через спор, в рейтинг и счётчик выполненных не входят.
 
-## Contributing
+### Реальное время
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Laravel Reverb — WebSocket-сервер, у каждого пользователя приватный канал `user.{id}`.
+- Уведомления — стандартные Laravel Notifications: запись в `notifications` (колокольчик) и трансляция в канал через очередь.
+- Сообщение чата отправляется в канал сразу, мимо очереди, — задержка воркера в чате заметна.
+- Livewire-компоненты слушают канал (`echo-private:…`, `echo-notification:…`) и обновляют только свою часть страницы: переписку, бейджи, список предложений, панель статуса заказа.
+- Если WebSocket недоступен, сайт не ломается: сообщение и уведомление сохраняются, ошибка трансляции уходит в лог, чат сам подгружает новые сообщения раз в 5 секунд, колокольчик — раз в минуту.
 
-## Code of Conduct
+## Скриншоты
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| | |
+|---|---|
+| ![Главная](docs/screenshots/01-home.png) | ![Предложение исполнителя](docs/screenshots/03-bid-modal.png) |
+| Главная: свежие заказы и направления | Предложение: цена не выше стартовой + 1000 ₽ |
+| ![Предложения по заказу](docs/screenshots/04-order-bids.png) | ![Чат](docs/screenshots/05-chat.png) |
+| Заказчик сравнивает предложения, рейтинг и отзывы | Чат по заказу с панелью статуса |
+| ![Оценка исполнителя](docs/screenshots/06-review.png) | ![Уведомления](docs/screenshots/07-notifications.png) |
+| Работа принята — оценка исполнителя | Колокольчик уведомлений |
+| ![Спор в админке](docs/screenshots/08-admin-dispute.png) | |
+| Разбор спора в админке: переписка и решения | |
 
-## Security Vulnerabilities
+<p>
+  <img src="docs/screenshots/09-mobile-feed.png" width="260" alt="Лента на телефоне">
+  <img src="docs/screenshots/10-mobile-chat.png" width="260" alt="Чат на телефоне">
+</p>
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Запуск локально
 
-## License
+Нужны PHP 8.4 (расширения `intl`, `pdo_mysql`), Composer, Node.js 20+ и MySQL 8.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+git clone https://github.com/KrisRatman/ExAuctioneJob.git ideajob
+cd ideajob
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan reverb:install   # ключи REVERB_* в .env
+# в .env: DB_* (MySQL), APP_URL, при желании IDEAJOB_DEMO=true
+php artisan migrate --seed
+npm install && npm run build
+composer run dev             # сервер, очередь, Vite и Reverb одной командой
+```
+
+`composer run dev` поднимает `artisan serve`, воркер очереди, Vite и Reverb. Без Reverb сайт тоже работает — без мгновенных обновлений.
+
+### Демо-данные
+
+Сидер создаёт дерево тегов из 7 разделов, заказчиков и исполнителей, заказы во всех статусах, чаты с перепиской, историю выполненных заказов с отзывами и открытый спор. Повторный запуск ничего не дублирует.
+
+| Роль | Email | Пароль |
+|---|---|---|
+| Заказчик | `customer@example.com` | `password` |
+| Исполнитель | `executor@example.com` | `password` |
+| Администратор (`/admin`) | `admin@example.com` | `password` |
+
+У заказчика и исполнителя есть общий заказ в работе — можно сразу сдать, принять и оценить работу.
+
+С `IDEAJOB_DEMO=true` на странице входа появляются кнопки «Войти как заказчик / исполнитель», а форма входа в админку заполнена.
+
+### Настройки (`.env`)
+
+| Переменная | Что задаёт |
+|---|---|
+| `IDEAJOB_DEMO` | Демо-стенд: вход в демо-аккаунты одной кнопкой |
+| `IDEAJOB_MAX_BID_MARKUP` | На сколько рублей предложение может превышать стартовую цену (по умолчанию 1000) |
+| `BROADCAST_CONNECTION` | `reverb` — реальное время, `log` — без WebSocket |
+| `REVERB_*`, `VITE_REVERB_*` | Адрес и ключи Reverb для сервера и браузера |
+
+Остальные правила аукциона (лимиты тегов, цены, срока) — в `config/ideajob.php`.
+
+## Тесты
+
+```bash
+php artisan test
+```
+
+145 тестов Pest, зелёные на SQLite (в памяти) и MySQL:
+
+- регистрация и роли, доступ каждой роли только к своим разделам;
+- совпадение тегов в ленте, лимит цены «+1000 ₽» (граница и обход формы), правка своего предложения;
+- принятие исполнителя: статусы, отклонение остальных, создание чата, повторное принятие и чужие заказы;
+- сдача, подтверждение, спор и все три решения администратора;
+- оценки: одна на заказ, пересчёт рейтинга, спорные заказы вне статистики, удаление отзыва модератором;
+- чат: доступ только участникам, прочтение, одно уведомление на диалог, работа при недоступном Reverb, запасной опрос;
+- уведомления и авторизация приватного канала;
+- страницы админки и демо-вход.
+
+Ключевые правила (лимит цены, совпадение тегов, «оценка только после выполнения», статистика без спорных заказов) дополнительно проверены мутациями: если убрать проверку из кода, тесты падают.
+
+## Структура
+
+```
+app/Actions/            аукцион и жизненный цикл заказа: одно действие — один переход
+app/Enums/              роли, статусы заказа, предложения и спора, решения по спору
+app/Events/             NewMessage — сообщение чата в канал Reverb
+app/Notifications/      уведомления колокольчика (база + трансляция)
+app/Livewire/           кабинет заказчика, лента исполнителя, чат, колокольчик, панель статуса заказа
+app/Filament/           админка: категории, заказы, споры, отзывы, пользователи
+config/ideajob.php      правила аукциона
+routes/channels.php     приватный канал пользователя
+database/seeders/       дерево тегов и демо-данные
+```

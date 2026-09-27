@@ -34,8 +34,18 @@
             <livewire:order-workflow :order="$order" :return-url="route('chats.show', $conversation)" compact :key="'workflow-'.$order->id.'-'.$order->status->value" />
 
             <div class="flex-1 space-y-3 overflow-y-auto bg-canvas/60 px-4 py-5 sm:px-5"
-                 x-data="{ scroll() { this.$el.scrollTop = this.$el.scrollHeight } }"
-                 x-init="scroll()" x-on:chat-scroll.window="$nextTick(() => scroll())"
+                 x-data="{
+                     timer: null,
+                     scroll() { this.$el.scrollTop = this.$el.scrollHeight },
+                     // Без WebSocket чат сам спрашивает новые сообщения раз в 5 секунд.
+                     live() { return window.Echo?.connector?.pusher?.connection?.state === 'connected' },
+                     init() {
+                         this.scroll();
+                         this.timer = setInterval(() => { if (! this.live() && ! document.hidden) this.$wire.poll() }, 5000);
+                     },
+                     destroy() { clearInterval(this.timer) },
+                 }"
+                 x-on:chat-scroll.window="$nextTick(() => scroll())"
                  data-messages>
                 @forelse ($this->messages as $message)
                     @php($mine = $message->sender_id === $me->id)
