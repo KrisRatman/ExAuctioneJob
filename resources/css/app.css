@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../../app/Enums/*.php';
+
+@theme {
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Тёплый красный — только для акцентов: главные кнопки, статусы, активные вкладки. */
+    --color-brand-50: #fef2f3;
+    --color-brand-100: #fde3e5;
+    --color-brand-200: #fbccd0;
+    --color-brand-300: #f7a3aa;
+    --color-brand-400: #f06f7a;
+    --color-brand-500: #e63946;
+    --color-brand-600: #d7263d;
+    --color-brand-700: #b41c31;
+    --color-brand-800: #961a2e;
+    --color-brand-900: #7f1a2d;
+    --color-brand-950: #460913;
+
+    --color-ink: #1a1a1a;
+    --color-canvas: #f8f9fa;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+input[type='number'].no-spin::-webkit-inner-spin-button,
+input[type='number'].no-spin::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type='number'].no-spin {
+    -moz-appearance: textfield;
+}
+
+@utility input {
+    @apply block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 focus:outline-none;
+}
+
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility btn-primary {
+    @apply btn bg-brand-600 text-white shadow-sm shadow-brand-600/20 hover:bg-brand-700;
+}
+
+@utility btn-secondary {
+    @apply btn border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50;
+}
+
+@utility card {
+    @apply rounded-2xl border border-slate-200 bg-white;
+}
+
+@utility badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ring-inset;
+}
+
+@utility tag {
+    @apply inline-flex items-center rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600;
+}

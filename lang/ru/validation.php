@@ -1,0 +1,66 @@
+<?php
+
+/*
+ * Сообщения для правил, которые используются на сайте и в админке.
+ */
+return [
+    'accepted' => 'Нужно отметить поле «:attribute».',
+    'array' => 'Поле «:attribute» должно быть списком.',
+    'distinct' => 'В поле «:attribute» есть повторы.',
+    'prohibited' => 'Поле «:attribute» здесь не заполняется.',
+    'boolean' => 'Поле «:attribute» должно быть «да» или «нет».',
+    'confirmed' => 'Поле «:attribute» не совпадает с подтверждением.',
+    'date' => 'Поле «:attribute» должно быть датой.',
+    'email' => 'Укажите корректный email.',
+    'enum' => 'Выбрано недопустимое значение поля «:attribute».',
+    'exists' => 'Выбрано недопустимое значение поля «:attribute».',
+    'image' => 'Файл в поле «:attribute» должен быть изображением.',
+    'in' => 'Выбрано недопустимое значение поля «:attribute».',
+    'integer' => 'Поле «:attribute» должно быть целым числом.',
+    'max' => [
+        'array' => 'В поле «:attribute» не больше :max элементов.',
+        'file' => 'Файл «:attribute» не больше :max КБ.',
+        'numeric' => 'Поле «:attribute» не больше :max.',
+        'string' => 'Поле «:attribute» не длиннее :max символов.',
+    ],
+    'min' => [
+        'array' => 'В поле «:attribute» не меньше :min элементов.',
+        'file' => 'Файл «:attribute» не меньше :min КБ.',
+        'numeric' => 'Поле «:attribute» не меньше :min.',
+        'string' => 'Поле «:attribute» не короче :min символов.',
+    ],
+    'numeric' => 'Поле «:attribute» должно быть числом.',
+    'password' => [
+        'letters' => 'Пароль должен содержать хотя бы одну букву.',
+        'mixed' => 'Пароль должен содержать строчные и заглавные буквы.',
+        'numbers' => 'Пароль должен содержать хотя бы одну цифру.',
+        'symbols' => 'Пароль должен содержать хотя бы один символ.',
+        'uncompromised' => 'Этот пароль встречался в утечках. Выберите другой.',
+    ],
+    'regex' => 'Поле «:attribute» заполнено неверно.',
+    'required' => 'Заполните поле «:attribute».',
+    'required_if' => 'Заполните поле «:attribute».',
+    'string' => 'Поле «:attribute» должно быть строкой.',
+    'unique' => 'Такое значение поля «:attribute» уже занято.',
+    'url' => 'Поле «:attribute» должно быть ссылкой.',
+
+    'attributes' => [
+        'name' => 'имя',
+        'email' => 'email',
+        'phone' => 'телефон',
+        'password' => 'пароль',
+        'password_confirmation' => 'повтор пароля',
+        'role' => 'роль',
+        'description' => 'о себе',
+        'categories' => 'специализации',
+        'categories.*' => 'специализация',
+        'title' => 'название',
+        'starting_price' => 'стартовая цена',
+        'categoryIds' => 'теги',
+        'categoryIds.*' => 'тег',
+        'offerPrice' => 'цена',
+        'approach' => 'как вы это сделаете',
+        'durationDays' => 'срок',
+        'startingPrice' => 'стартовая цена',
+    ],
+];
