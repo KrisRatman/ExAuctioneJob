@@ -14,6 +14,9 @@ class ChatNavLink extends Component
 {
     public string $linkClass = '';
 
+    /** `link` — пункт меню в шапке, `tab` — вкладка нижней панели на телефоне. */
+    public string $variant = 'link';
+
     /** @return array<string, string> */
     public function getListeners(): array
     {

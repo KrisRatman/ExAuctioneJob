@@ -1,12 +1,11 @@
-<div class="mx-auto max-w-3xl px-4 py-10">
-    <h1 class="text-3xl font-extrabold tracking-tight">Мой профиль</h1>
-    <p class="mt-1 text-slate-500">Заказчик видит описание и теги рядом с вашим предложением.</p>
+<div class="mx-auto max-w-3xl px-4 py-6 sm:py-10">
+    <x-page-header title="Мой профиль" subtitle="Заказчик видит описание, теги и отзывы рядом с вашим предложением." />
 
     <div class="card mt-6 p-5">
         <x-rating :profile="auth()->user()->executorProfile" class="text-sm" />
     </div>
 
-    <form wire:submit="save" class="card mt-4 space-y-6 p-6 sm:p-8">
+    <form wire:submit="save" class="card mt-4 space-y-6 p-5 sm:p-8">
         <div class="grid gap-5 sm:grid-cols-2">
             <x-field label="Имя" for="name">
                 <input id="name" wire:model="name" class="input">

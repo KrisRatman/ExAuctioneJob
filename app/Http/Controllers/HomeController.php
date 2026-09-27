@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\OrderStatus;
 use App\Models\Category;
 use App\Models\Order;
 use Illuminate\Contracts\View\View;
@@ -13,7 +12,9 @@ class HomeController extends Controller
     {
         return view('home', [
             'tree' => Category::tree(),
-            'openOrdersCount' => Order::query()->where('status', OrderStatus::Open)->count(),
+            'openOrdersCount' => Order::query()->open()->count(),
+            // Свежие заказы — сразу показывают исполнителю, что на бирже есть работа.
+            'latestOrders' => Order::query()->open()->with('categories')->withCount('bids')->latest()->limit(5)->get(),
         ]);
     }
 }

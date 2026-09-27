@@ -1,9 +1,9 @@
 <x-layout title="Регистрация">
-    <div class="mx-auto max-w-2xl px-4 py-14" x-data="{ role: @js(old('role', $role->value)) }">
-        <h1 class="text-center text-3xl font-extrabold tracking-tight">Регистрация</h1>
+    <div class="mx-auto max-w-2xl px-4 py-8 sm:py-14" x-data="{ role: @js(old('role', $role->value)) }">
+        <h1 class="text-center text-2xl font-extrabold sm:text-3xl tracking-tight">Регистрация</h1>
         <p class="mt-2 text-center text-slate-500">Уже есть аккаунт? <a href="{{ route('login') }}" class="font-bold text-brand-600 hover:text-brand-700">Войдите</a></p>
 
-        <form method="post" action="{{ route('register') }}" class="card mt-8 space-y-6 p-6 sm:p-8">
+        <form method="post" action="{{ route('register') }}" class="card mt-6 space-y-6 p-5 sm:mt-8 sm:p-8">
             @csrf
 
             <fieldset>

@@ -1,67 +1,65 @@
-<div class="mx-auto max-w-6xl px-4 py-10">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tight">Мои заказы</h1>
-            <p class="mt-1 text-slate-500">Откройте заказ, чтобы сравнить предложения и выбрать исполнителя.</p>
-        </div>
-        <a href="{{ route('customer.orders.create') }}" class="btn-primary">
-            <x-heroicon-o-plus class="size-4" stroke-width="2.5" /> Разместить заказ
-        </a>
-    </div>
+<div class="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+    <x-page-header title="Мои заказы" />
 
-    <div class="mt-8 flex gap-1 border-b border-slate-200" role="tablist">
+    <div class="mt-5 flex gap-6 border-b border-slate-200" role="tablist">
         @foreach (['active' => 'Активные', 'archive' => 'Архив'] as $key => $label)
             <button type="button" wire:click="$set('tab', '{{ $key }}')" role="tab" aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
                     @class([
-                        '-mb-px border-b-2 px-4 py-2.5 text-sm font-bold transition',
-                        'border-brand-600 text-brand-700' => $tab === $key,
+                        '-mb-px border-b-2 pb-3 text-sm font-bold transition',
+                        'border-brand-600 text-ink' => $tab === $key,
                         'border-transparent text-slate-500 hover:text-ink' => $tab !== $key,
                     ])>
-                {{ $label }} <span class="ml-1 text-slate-400">{{ $this->counts[$key] }}</span>
+                {{ $label }} <span class="ml-0.5 font-semibold text-slate-400">{{ $this->counts[$key] }}</span>
             </button>
         @endforeach
     </div>
 
-    <div class="mt-6 space-y-3">
+    <div class="mt-4 space-y-3">
         @forelse ($this->orders as $order)
             <a href="{{ route('customer.orders.show', $order) }}" wire:key="order-{{ $order->id }}"
-               class="card flex flex-col gap-4 p-5 transition hover:border-slate-300 hover:shadow-sm sm:flex-row sm:items-center">
-                <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center gap-2">
+               class="card group block p-4 transition hover:border-slate-300 hover:shadow-sm sm:p-5">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
                         <span class="badge {{ $order->status->badgeClasses() }}">{{ $order->status->getLabel() }}</span>
-                        <span class="text-xs text-slate-400">{{ $order->created_at->translatedFormat('j F Y') }}</span>
+                        <h2 class="mt-2 text-base font-bold group-hover:text-brand-600 sm:text-lg">{{ $order->title }}</h2>
                     </div>
-                    <h2 class="mt-2 truncate text-lg font-bold">{{ $order->title }}</h2>
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                        @foreach ($order->categories as $tag)
-                            <span class="tag">{{ $tag->name }}</span>
-                        @endforeach
-                    </div>
+                    <div class="shrink-0 text-right text-lg font-extrabold whitespace-nowrap sm:text-xl">{{ rub($order->starting_price) }}</div>
                 </div>
-                <div class="flex items-center justify-between gap-6 sm:flex-col sm:items-end sm:gap-1">
-                    <div class="text-lg font-extrabold">{{ rub($order->starting_price) }}</div>
+
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                    @foreach ($order->categories as $tag)
+                        <span class="tag">{{ $tag->name }}</span>
+                    @endforeach
+                </div>
+
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs">
+                    <span class="text-slate-500">{{ $order->created_at->translatedFormat('j F Y') }}</span>
                     @if ($order->isOpen())
-                        <div @class(['text-sm font-bold', 'text-brand-600' => $order->pending_bids_count > 0, 'text-slate-400' => $order->pending_bids_count === 0])>
-                            @if ($order->pending_bids_count > 0)
+                        @if ($order->pending_bids_count > 0)
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 font-bold text-brand-700">
+                                <x-heroicon-s-users class="size-3.5" />
                                 {{ $order->pending_bids_count }} {{ plural($order->pending_bids_count, 'исполнитель готов', 'исполнителя готовы', 'исполнителей готовы') }} взяться
-                            @else
-                                Пока нет предложений
-                            @endif
-                        </div>
+                            </span>
+                        @else
+                            <span class="font-semibold text-slate-400">Ждём предложений</span>
+                        @endif
                     @elseif ($order->executor)
-                        <div class="text-sm text-slate-500">Исполнитель: <span class="font-semibold text-ink">{{ $order->executor->name }}</span></div>
+                        <span class="inline-flex items-center gap-2 text-slate-500">
+                            <x-avatar :name="$order->executor->name" size="xs" />
+                            <span class="font-semibold text-ink">{{ $order->executor->name }}</span>
+                        </span>
                     @endif
                 </div>
             </a>
         @empty
-            <div class="card px-6 py-14 text-center">
-                <x-heroicon-o-clipboard-document-list class="mx-auto size-10 text-slate-300" />
-                <p class="mt-3 font-bold">{{ $tab === 'archive' ? 'В архиве пусто' : 'У вас пока нет активных заказов' }}</p>
-                @if ($tab === 'active')
-                    <p class="mt-1 text-sm text-slate-500">Опишите задачу и назовите цену — исполнители предложат свои условия.</p>
-                    <a href="{{ route('customer.orders.create') }}" class="btn-primary mt-5">Разместить заказ</a>
-                @endif
-            </div>
+            @if ($tab === 'archive')
+                <x-empty-state icon="heroicon-o-archive-box" title="В архиве пусто" text="Здесь будут выполненные и отменённые заказы." />
+            @else
+                <x-empty-state icon="heroicon-o-clipboard-document-list" title="Активных заказов нет"
+                               text="Опишите задачу и назовите цену — исполнители предложат свои условия.">
+                    <a href="{{ route('customer.orders.create') }}" class="btn-primary">Разместить заказ</a>
+                </x-empty-state>
+            @endif
         @endforelse
     </div>
 

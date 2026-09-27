@@ -3,6 +3,7 @@
 namespace App\Livewire\Executor;
 
 use App\Actions\PlaceBid;
+use App\Enums\OrderStatus;
 use App\Exceptions\AuctionException;
 use App\Models\Category;
 use App\Models\Order;
@@ -57,7 +58,17 @@ class Feed extends Component
     #[Computed]
     public function myTags(): Collection
     {
-        return auth()->user()->categories()->orderBy('name')->get();
+        return auth()->user()->categories()
+            ->withCount(['orders as open_orders_count' => fn ($q) => $q->where('status', OrderStatus::Open)])
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** Сколько открытых заказов подходит под теги исполнителя. */
+    #[Computed]
+    public function totalCount(): int
+    {
+        return $this->visibleOrders()->count();
     }
 
     /** @return Builder<Order> */
@@ -77,7 +88,7 @@ class Feed extends Component
             ->when($search !== '', fn (Builder $q) => $q->where(fn (Builder $w) => $w
                 ->where('title', 'like', "%{$search}%")
                 ->orWhere('description', 'like', "%{$search}%")))
-            ->with(['categories', 'bids' => fn ($q) => $q->where('executor_id', auth()->id())])
+            ->with(['categories', 'customer', 'bids' => fn ($q) => $q->where('executor_id', auth()->id())])
             ->withCount('bids')
             ->latest()
             ->paginate(10);

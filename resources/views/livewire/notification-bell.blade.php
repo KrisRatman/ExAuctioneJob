@@ -9,7 +9,7 @@
     </button>
 
     <div x-show="open" x-cloak x-transition.origin.top.right
-         class="absolute right-0 top-full z-40 mt-2 w-[min(92vw,24rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+         class="fixed inset-x-2 top-16 z-40 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96">
         <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <span class="font-extrabold">Уведомления</span>
             @if ($this->unreadCount > 0)

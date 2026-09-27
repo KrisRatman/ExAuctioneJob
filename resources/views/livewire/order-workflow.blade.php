@@ -14,10 +14,10 @@
                 <div class="min-w-0 flex-1 text-sm">
                     @if ($isCustomer)
                         <span class="font-bold">Исполнитель работает над заказом.</span>
-                        <span class="text-slate-600">Когда работа будет сдана, вы сможете её подтвердить или открыть спор.</span>
+                        <span @class(['text-slate-600', 'hidden sm:inline' => $compact])>Когда работа будет сдана, вы сможете её подтвердить или открыть спор.</span>
                     @else
                         <span class="font-bold">Заказ в работе.</span>
-                        <span class="text-slate-600">Закончили — сдайте работу, заказчик получит уведомление.</span>
+                        <span @class(['text-slate-600', 'hidden sm:inline' => $compact])>Закончили — сдайте работу, заказчик получит уведомление.</span>
                     @endif
                     @if ($dispute?->resolution === DisputeResolution::ReturnToWork)
                         <p class="mt-1 text-slate-600">После спора заказ возвращён на доработку: {{ $dispute->resolution_comment }}</p>
@@ -38,10 +38,10 @@
                     <div class="min-w-0 flex-1 text-sm">
                         @if ($isCustomer)
                             <span class="font-bold">Исполнитель сдал работу.</span>
-                            <span class="text-slate-600">Проверьте результат: всё устраивает — подтвердите, иначе откройте спор.</span>
+                            <span @class(['text-slate-600', 'hidden sm:inline' => $compact])>Проверьте результат: всё устраивает — подтвердите, иначе откройте спор.</span>
                         @else
                             <span class="font-bold">Работа на проверке у заказчика.</span>
-                            <span class="text-slate-600">Сдано {{ $order->delivered_at?->translatedFormat('j F, H:i') }}.</span>
+                            <span @class(['text-slate-600', 'hidden sm:inline' => $compact])>Сдано {{ $order->delivered_at?->translatedFormat('j F, H:i') }}.</span>
                         @endif
                     </div>
                     @if ($isCustomer)

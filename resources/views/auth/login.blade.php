@@ -1,9 +1,9 @@
 <x-layout title="Вход">
-    <div class="mx-auto max-w-md px-4 py-14">
-        <h1 class="text-center text-3xl font-extrabold tracking-tight">Вход</h1>
+    <div class="mx-auto max-w-md px-4 py-8 sm:py-14">
+        <h1 class="text-center text-2xl font-extrabold sm:text-3xl tracking-tight">Вход</h1>
         <p class="mt-2 text-center text-slate-500">Нет аккаунта? <a href="{{ route('register') }}" class="font-bold text-brand-600 hover:text-brand-700">Зарегистрируйтесь</a></p>
 
-        <form method="post" action="{{ route('login') }}" class="card mt-8 space-y-5 p-6">
+        <form method="post" action="{{ route('login') }}" class="card mt-6 space-y-5 p-5 sm:mt-8 sm:p-6">
             @csrf
             <x-field label="Email" for="email">
                 <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="email" class="input">

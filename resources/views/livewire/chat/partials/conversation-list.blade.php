@@ -12,7 +12,7 @@
                    'bg-brand-50' => $isActive,
                    'hover:bg-slate-50' => ! $isActive,
                ])>
-                <span class="grid size-10 shrink-0 place-items-center rounded-full bg-slate-900 font-bold text-white">{{ mb_substr($other->name, 0, 1) }}</span>
+                <x-avatar :name="$other->name" />
                 <span class="min-w-0 flex-1">
                     <span class="flex items-baseline justify-between gap-2">
                         <span class="truncate font-bold">{{ $other->name }}</span>

@@ -1,9 +1,9 @@
-<div class="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+<div class="mx-auto max-w-6xl px-0 py-0 sm:px-4 sm:py-10">
     @php($me = auth()->user())
     @php($other = $conversation->otherParticipant($me))
     @php($order = $conversation->order)
 
-    <div class="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
         {{-- Диалоги --}}
         <aside class="card hidden max-h-[calc(100vh-10rem)] overflow-y-auto lg:block" aria-label="Диалоги">
             <div class="border-b border-slate-100 px-4 py-3 font-extrabold">Чаты</div>
@@ -11,12 +11,12 @@
         </aside>
 
         {{-- Переписка --}}
-        <section class="card flex h-[calc(100vh-8rem)] min-h-[28rem] flex-col overflow-hidden lg:h-[calc(100vh-10rem)]" aria-label="Переписка">
+        <section class="flex h-[calc(100dvh-8rem)] min-h-[24rem] flex-col overflow-hidden bg-white sm:card sm:h-[calc(100dvh-10rem)] md:h-[calc(100dvh-12rem)]" aria-label="Переписка">
             <header class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
                 <a href="{{ route('chats.index') }}" class="-ml-1 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-ink lg:hidden" aria-label="Все чаты">
                     <x-heroicon-m-arrow-left class="size-5" />
                 </a>
-                <span class="grid size-10 shrink-0 place-items-center rounded-full bg-slate-900 font-bold text-white">{{ mb_substr($other->name, 0, 1) }}</span>
+                <x-avatar :name="$other->name" />
                 <div class="min-w-0 flex-1">
                     <div class="truncate font-bold">{{ $other->name }}</div>
                     <div class="truncate text-xs text-slate-500">
