@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Пускает только пользователей с нужной ролью: `role:customer`, `role:executor`.
+ * Пускает только пользователей с нужной ролью: `role:customer`, `role:customer,executor`.
  * Остальных отправляет в их собственный кабинет.
  */
 class EnsureUserHasRole
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
@@ -20,7 +20,7 @@ class EnsureUserHasRole
             return redirect()->guest(route('login'));
         }
 
-        if ($user->role->value !== $role) {
+        if (! in_array($user->role->value, $roles, true)) {
             return redirect($user->homeUrl());
         }
 

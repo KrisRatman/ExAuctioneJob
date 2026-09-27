@@ -7,10 +7,12 @@ use App\Exceptions\AuctionException;
 use App\Models\Bid;
 use App\Models\Order;
 use App\Models\User;
+use App\Notifications\NewBidPlaced;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Исполнитель делает предложение по заказу или правит своё, пока заказ на аукционе.
+ * О новом предложении (не о правке) заказчик получает уведомление.
  */
 class PlaceBid
 {
@@ -19,7 +21,7 @@ class PlaceBid
      */
     public function handle(User $executor, Order $order, array $data): Bid
     {
-        return DB::transaction(function () use ($executor, $order, $data) {
+        $bid = DB::transaction(function () use ($executor, $order, $data) {
             // Блокировка заказа: параллельное принятие исполнителя не пропустит ставку в закрытый заказ.
             $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
@@ -45,5 +47,12 @@ class PlaceBid
                 ],
             );
         });
+
+        if ($bid->wasRecentlyCreated) {
+            $bid->load(['order.customer', 'executor']);
+            $bid->order->customer->notify(new NewBidPlaced($bid));
+        }
+
+        return $bid;
     }
 }

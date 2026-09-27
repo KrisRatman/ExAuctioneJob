@@ -6,18 +6,23 @@ use App\Enums\BidStatus;
 use App\Enums\OrderStatus;
 use App\Exceptions\AuctionException;
 use App\Models\Bid;
+use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\User;
+use App\Notifications\BidRejected;
+use App\Notifications\ExecutorAccepted;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 /**
- * Заказчик выбирает исполнителя: заказ уходит в работу, остальные предложения отклоняются.
+ * Заказчик выбирает исполнителя: заказ уходит в работу, остальные предложения отклоняются,
+ * открывается чат. Исполнитель и отклонённые получают уведомления.
  */
 class AcceptBid
 {
-    public function handle(User $customer, Bid $bid): Order
+    public function handle(User $customer, Bid $bid): Conversation
     {
-        return DB::transaction(function () use ($customer, $bid) {
+        [$conversation, $rejectedExecutorIds] = DB::transaction(function () use ($customer, $bid) {
             $order = Order::query()->whereKey($bid->order_id)->lockForUpdate()->firstOrFail();
 
             if ($order->customer_id !== $customer->id) {
@@ -42,12 +47,26 @@ class AcceptBid
 
             $bid->update(['status' => BidStatus::Accepted]);
 
-            $order->bids()
-                ->whereKeyNot($bid->id)
-                ->where('status', BidStatus::Pending)
-                ->update(['status' => BidStatus::Rejected, 'updated_at' => now()]);
+            $otherBids = $order->bids()->whereKeyNot($bid->id)->where('status', BidStatus::Pending);
+            $rejectedExecutorIds = (clone $otherBids)->pluck('executor_id');
+            $otherBids->update(['status' => BidStatus::Rejected, 'updated_at' => now()]);
 
-            return $order;
+            $conversation = Conversation::query()->firstOrCreate(
+                ['order_id' => $order->id],
+                ['customer_id' => $order->customer_id, 'executor_id' => $bid->executor_id],
+            );
+
+            return [$conversation, $rejectedExecutorIds];
         });
+
+        $conversation->load(['order', 'customer', 'executor']);
+
+        $conversation->executor->notify(new ExecutorAccepted($conversation));
+        Notification::send(
+            User::query()->whereKey($rejectedExecutorIds)->get(),
+            new BidRejected($conversation->order, BidRejected::ReasonOtherExecutor),
+        );
+
+        return $conversation;
     }
 }

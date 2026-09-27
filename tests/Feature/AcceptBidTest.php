@@ -5,7 +5,9 @@ use App\Enums\BidStatus;
 use App\Enums\OrderStatus;
 use App\Exceptions\AuctionException;
 use App\Livewire\Customer\OrderShow;
+use App\Livewire\Executor\Feed;
 use App\Models\Bid;
+use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\User;
 use Livewire\Livewire;
@@ -38,11 +40,11 @@ it('expands the executor card with the approach and profile', function () {
         ->assertSee('Принять исполнителя');
 });
 
-it('accepts an executor and rejects the other bids', function () {
+it('accepts an executor, rejects the other bids and opens the chat', function () {
     Livewire::actingAs($this->customer)
         ->test(OrderShow::class, ['order' => $this->order])
         ->call('accept', $this->chosen->id)
-        ->assertRedirect(route('customer.orders.show', $this->order));
+        ->assertRedirect(route('chats.show', Conversation::query()->sole()));
 
     $order = $this->order->fresh();
 
@@ -115,8 +117,7 @@ it('cannot cancel an order that is already in progress', function () {
 it('removes the order from the feed of other executors once accepted', function () {
     app(AcceptBid::class)->handle($this->customer, $this->chosen);
 
-    $this->actingAs($this->other->executor)
-        ->get('/feed')
-        ->assertOk()
+    Livewire::actingAs($this->other->executor)
+        ->test(Feed::class)
         ->assertDontSee($this->order->title);
 });

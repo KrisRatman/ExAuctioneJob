@@ -36,10 +36,15 @@
             @if ($order->executor)
                 <div class="mt-6 flex items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4">
                     <x-heroicon-o-user-circle class="size-8 text-sky-600" />
-                    <div class="text-sm">
+                    <div class="min-w-0 flex-1 text-sm">
                         <div class="text-slate-500">Исполнитель</div>
                         <div class="font-bold">{{ $order->executor->name }}</div>
                     </div>
+                    @if ($order->conversation)
+                        <a href="{{ route('chats.show', $order->conversation) }}" class="btn-primary shrink-0">
+                            <x-heroicon-o-chat-bubble-left-right class="size-4" /> Открыть чат
+                        </a>
+                    @endif
                 </div>
             @endif
 

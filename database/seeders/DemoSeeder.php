@@ -6,8 +6,10 @@ use App\Actions\AcceptBid;
 use App\Actions\CancelOrder;
 use App\Actions\CreateOrder;
 use App\Actions\PlaceBid;
+use App\Actions\SendMessage;
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -32,6 +34,9 @@ class DemoSeeder extends Seeder
 
             return;
         }
+
+        // Сидер не должен копить задачи рассылки в очереди: WebSocket тут не нужен.
+        config(['broadcasting.default' => 'null', 'queue.default' => 'sync']);
 
         $this->tags = Category::query()->tags()->get()->keyBy('name');
 
@@ -109,10 +114,24 @@ class DemoSeeder extends Seeder
 
         // Пара заказов уже в работе и один отменён — видно все статусы.
         $cafeSite = Order::query()->where('title', 'like', 'Сайт-меню%')->firstOrFail();
-        app(AcceptBid::class)->handle($cafeSite->customer()->firstOrFail(), $cafeSite->bids()->where('executor_id', $executors['sergey@example.com']->id)->firstOrFail());
+        $cafeChat = app(AcceptBid::class)->handle($cafeSite->customer()->firstOrFail(), $cafeSite->bids()->where('executor_id', $executors['sergey@example.com']->id)->firstOrFail());
+        $this->chat($cafeChat, [
+            ['customer', 'Здравствуйте! Выбрали вас. Когда сможете начать?'],
+            ['executor', 'Добрый день! Могу сегодня. Пришлите, пожалуйста, меню и фото блюд.'],
+            ['customer', 'Отправила на почту. QR-коды нужны на 12 столов.'],
+            ['executor', 'Принято. Первую версию покажу через 5 дней.'],
+        ]);
 
         $video = Order::query()->where('title', 'like', 'Смонтировать%')->firstOrFail();
         app(AcceptBid::class)->handle($video->customer()->firstOrFail(), $video->bids()->firstOrFail());
+
+        // Заказчик из демо-доступа тоже сразу видит чат: принимает Дмитрия по WooCommerce.
+        $shop = Order::query()->where('title', 'like', 'Доработать интернет-магазин%')->firstOrFail();
+        $shopChat = app(AcceptBid::class)->handle($shop->customer()->firstOrFail(), $shop->bids()->where('executor_id', $executors['executor@example.com']->id)->firstOrFail());
+        $this->chat($shopChat, [
+            ['customer', 'Дмитрий, добрый день! Доступы к хостингу пришлю в личном сообщении на почту.'],
+            ['executor', 'Здравствуйте! Начну со СДЭК, потом фильтры и скорость. Вопрос: какие тарифы СДЭК показывать?'],
+        ]);
 
         $tilda = Order::query()->where('title', 'like', 'Перенести сайт%')->firstOrFail();
         app(CancelOrder::class)->handle($tilda->customer()->firstOrFail(), $tilda);
@@ -137,6 +156,16 @@ class DemoSeeder extends Seeder
         $user->categories()->attach(collect($tagNames)->map(fn (string $tag) => $this->tags[$tag]->id));
 
         return $user;
+    }
+
+    /** @param  list<array{0: 'customer'|'executor', 1: string}>  $lines */
+    private function chat(Conversation $conversation, array $lines): void
+    {
+        $conversation->loadMissing(['customer', 'executor']);
+
+        foreach ($lines as [$who, $text]) {
+            app(SendMessage::class)->handle($who === 'customer' ? $conversation->customer : $conversation->executor, $conversation, $text);
+        }
     }
 
     private function approach(int $days): string

@@ -32,9 +32,11 @@
             <nav class="ml-4 hidden items-center gap-1 md:flex" aria-label="Основное меню">
                 @if ($user?->isCustomer())
                     <a href="{{ route('customer.orders.index') }}" class="{{ $navLink(request()->routeIs('customer.orders.index', 'customer.orders.show')) }}">Мои заказы</a>
+                    <livewire:chat-nav-link :link-class="$navLink(request()->routeIs('chats.*'))" />
                 @elseif ($user?->isExecutor())
                     <a href="{{ route('executor.feed') }}" class="{{ $navLink(request()->routeIs('executor.feed')) }}">Лента заказов</a>
                     <a href="{{ route('executor.bids') }}" class="{{ $navLink(request()->routeIs('executor.bids')) }}">Мои предложения</a>
+                    <livewire:chat-nav-link :link-class="$navLink(request()->routeIs('chats.*'))" />
                     <a href="{{ route('executor.profile') }}" class="{{ $navLink(request()->routeIs('executor.profile')) }}">Профиль</a>
                 @endif
             </nav>
@@ -49,6 +51,10 @@
                         <a href="{{ url('/admin') }}" class="btn-secondary">Админка</a>
                     @endif
 
+                    @unless ($user->isAdmin())
+                        <livewire:notification-bell />
+                    @endunless
+
                     <div class="relative" @click.outside="menu = false">
                         <button type="button" @click="menu = !menu" class="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-100" :aria-expanded="menu">
                             <span class="grid size-8 place-items-center rounded-full bg-slate-900 text-sm font-bold text-white">{{ mb_substr($user->name, 0, 1) }}</span>
@@ -62,9 +68,11 @@
                             @if ($user->isCustomer())
                                 <a href="{{ route('customer.orders.index') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 md:hidden">Мои заказы</a>
                                 <a href="{{ route('customer.orders.create') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 sm:hidden">Разместить заказ</a>
+                                <a href="{{ route('chats.index') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 md:hidden">Чаты</a>
                             @elseif ($user->isExecutor())
                                 <a href="{{ route('executor.feed') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 md:hidden">Лента заказов</a>
                                 <a href="{{ route('executor.bids') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 md:hidden">Мои предложения</a>
+                                <a href="{{ route('chats.index') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 md:hidden">Чаты</a>
                                 <a href="{{ route('executor.profile') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 md:hidden">Профиль</a>
                             @endif
                             <form method="post" action="{{ route('logout') }}">

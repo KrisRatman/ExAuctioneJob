@@ -53,6 +53,24 @@ class OrderShow extends Component
         return $this->bids->firstWhere('id', $this->selectedBidId);
     }
 
+    /**
+     * Новое предложение приходит через Reverb — список обновляется без перезагрузки.
+     *
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        return ['echo-notification:user.'.auth()->id() => 'onNotification'];
+    }
+
+    /** @param  array<string, mixed>  $notification */
+    public function onNotification(array $notification): void
+    {
+        if (($notification['order_id'] ?? null) === $this->order->id) {
+            unset($this->bids, $this->selectedBid);
+        }
+    }
+
     public function selectBid(int $bidId): void
     {
         $this->selectedBidId = $this->selectedBidId === $bidId ? null : $bidId;
@@ -63,18 +81,17 @@ class OrderShow extends Component
         $bid = $this->order->bids()->with('executor')->findOrFail($bidId);
 
         try {
-            $this->order = $acceptBid->handle(auth()->user(), $bid);
+            $conversation = $acceptBid->handle(auth()->user(), $bid);
         } catch (AuctionException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'error');
 
             return;
         }
 
-        unset($this->bids, $this->selectedBid);
+        session()->flash('status', 'Исполнитель '.$bid->executor->name.' принят, остальные предложения отклонены. Обсудите детали в чате.');
 
-        session()->flash('status', 'Исполнитель '.$bid->executor->name.' принят. Остальные предложения отклонены.');
-
-        $this->redirectRoute('customer.orders.show', $this->order);
+        // Сразу в чат с выбранным исполнителем.
+        $this->redirectRoute('chats.show', $conversation);
     }
 
     public function cancel(CancelOrder $cancelOrder): void
@@ -94,7 +111,7 @@ class OrderShow extends Component
 
     public function render(): View
     {
-        $this->order->loadMissing(['categories', 'executor']);
+        $this->order->loadMissing(['categories', 'executor', 'conversation']);
 
         return view('livewire.customer.order-show')->title($this->order->title);
     }

@@ -79,6 +79,22 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Bid::class, 'executor_id');
     }
 
+    /** Приватный канал пользователя для уведомлений и сообщений чата. */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'user.'.$this->id;
+    }
+
+    /** Сколько сообщений от собеседников пользователь ещё не прочитал. */
+    public function unreadMessagesCount(): int
+    {
+        return Message::query()
+            ->whereNull('read_at')
+            ->where('sender_id', '!=', $this->id)
+            ->whereIn('conversation_id', Conversation::query()->forUser($this)->select('id'))
+            ->count();
+    }
+
     public function isCustomer(): bool
     {
         return $this->role === UserRole::Customer;

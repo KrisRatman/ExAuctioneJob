@@ -65,6 +65,12 @@ class Order extends Model
         return $this->hasMany(Bid::class);
     }
 
+    /** @return HasOne<Conversation, $this> */
+    public function conversation(): HasOne
+    {
+        return $this->hasOne(Conversation::class);
+    }
+
     /** @return HasOne<Bid, $this> */
     public function acceptedBid(): HasOne
     {

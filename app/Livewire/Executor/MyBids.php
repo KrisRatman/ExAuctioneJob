@@ -22,7 +22,7 @@ class MyBids extends Component
     public function bids(): LengthAwarePaginator
     {
         return auth()->user()->bids()
-            ->with(['order.categories', 'order.customer'])
+            ->with(['order.categories', 'order.customer', 'order.conversation'])
             ->latest('updated_at')
             ->paginate(15);
     }

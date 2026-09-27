@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
+use App\Livewire\Chat\Index as ChatIndex;
+use App\Livewire\Chat\Show as ChatShow;
 use App\Livewire\Customer\CreateOrder;
 use App\Livewire\Customer\OrderList;
 use App\Livewire\Customer\OrderShow;
@@ -34,5 +36,11 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/feed', Feed::class)->name('executor.feed');
         Route::livewire('/my/bids', MyBids::class)->name('executor.bids');
         Route::livewire('/profile', EditProfile::class)->name('executor.profile');
+    });
+
+    // Чаты заказчика и исполнителя по заказам в работе
+    Route::middleware('role:customer,executor')->prefix('chats')->name('chats.')->group(function () {
+        Route::livewire('/', ChatIndex::class)->name('index');
+        Route::livewire('/{conversation}', ChatShow::class)->name('show');
     });
 });

@@ -22,6 +22,11 @@
                         <div class="text-lg font-extrabold">{{ rub($bid->offer_price) }}</div>
                         <div class="text-xs text-slate-500">стартовая {{ rub($bid->order->starting_price) }} · {{ $bid->duration_days }} {{ plural($bid->duration_days, 'день', 'дня', 'дней') }}</div>
                     </div>
+                    @if ($bid->status === \App\Enums\BidStatus::Accepted && $bid->order->conversation)
+                        <a href="{{ route('chats.show', $bid->order->conversation) }}" class="btn-primary">
+                            <x-heroicon-o-chat-bubble-left-right class="size-4" /> Чат с заказчиком
+                        </a>
+                    @endif
                 </div>
             </article>
         @empty
