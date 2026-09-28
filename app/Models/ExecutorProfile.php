@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Анкета исполнителя: описание и кэш рейтинга.
+ * Анкета исполнителя: город, описание и кэш рейтинга.
  */
-#[Fillable(['user_id', 'description', 'rating_avg', 'reviews_count', 'completed_orders_count'])]
+#[Fillable(['user_id', 'city_id', 'description', 'rating_avg', 'reviews_count', 'completed_orders_count'])]
 class ExecutorProfile extends Model
 {
     /** @use HasFactory<ExecutorProfileFactory> */
@@ -38,5 +38,15 @@ class ExecutorProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Город, в котором мастер берёт заказы.
+     *
+     * @return BelongsTo<City, $this>
+     */
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 }

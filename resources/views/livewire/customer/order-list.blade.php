@@ -33,7 +33,7 @@
                 </div>
 
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs">
-                    <span class="text-slate-500">{{ $order->created_at->translatedFormat('j F Y') }}</span>
+                    <span class="text-slate-500">{{ $order->city->name }} · {{ $order->created_at->translatedFormat('j F Y') }}</span>
                     @if ($order->isOpen())
                         @if ($order->pending_bids_count > 0)
                             <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 font-bold text-brand-700">

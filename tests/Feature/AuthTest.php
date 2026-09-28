@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\User;
 
 it('registers a customer and sends them to their orders', function () {
@@ -20,9 +21,10 @@ it('registers a customer and sends them to their orders', function () {
     $this->assertAuthenticatedAs($user);
 });
 
-it('registers an executor with a profile and specialisation tags', function () {
-    $laravel = tag('Laravel');
-    $wordpress = tag('WordPress');
+it('registers an executor with a city, a profile and specialisation tags', function () {
+    $tiles = tag('Укладка плитки');
+    $painting = tag('Малярные работы');
+    $city = City::factory()->create(['name' => 'Екатеринбург']);
 
     $this->post('/register', [
         'role' => 'executor',
@@ -31,26 +33,28 @@ it('registers an executor with a profile and specialisation tags', function () {
         'phone' => '+7 900 123-45-67',
         'password' => 'secret-password',
         'password_confirmation' => 'secret-password',
-        'description' => 'Фулстек-разработчик, четыре года опыта на Laravel и WordPress.',
-        'categories' => [$laravel->id, $wordpress->id],
+        'city_id' => $city->id,
+        'description' => 'Мастер-отделочник, восемь лет: плитка, покраска, ванные под ключ.',
+        'categories' => [$tiles->id, $painting->id],
     ])->assertRedirect(route('executor.feed'));
 
     $user = User::query()->where('email', 'dima@example.com')->firstOrFail();
 
     expect($user->role)->toBe(UserRole::Executor)
         ->and($user->phone)->toBe('+7 900 123-45-67')
-        ->and($user->executorProfile->description)->toStartWith('Фулстек')
-        ->and($user->categories->modelKeys())->toEqualCanonicalizing([$laravel->id, $wordpress->id]);
+        ->and($user->executorProfile->city_id)->toBe($city->id)
+        ->and($user->executorProfile->description)->toStartWith('Мастер-отделочник')
+        ->and($user->categories->modelKeys())->toEqualCanonicalizing([$tiles->id, $painting->id]);
 });
 
-it('requires an executor to describe themselves and pick tags', function () {
+it('requires an executor to pick a city, describe themselves and pick tags', function () {
     $this->post('/register', [
         'role' => 'executor',
         'name' => 'Дмитрий',
         'email' => 'dima@example.com',
         'password' => 'secret-password',
         'password_confirmation' => 'secret-password',
-    ])->assertSessionHasErrors(['description', 'categories']);
+    ])->assertSessionHasErrors(['city_id', 'description', 'categories']);
 
     expect(User::query()->count())->toBe(0);
 });
@@ -64,7 +68,8 @@ it('does not accept a top-level section as a tag', function () {
         'email' => 'dima@example.com',
         'password' => 'secret-password',
         'password_confirmation' => 'secret-password',
-        'description' => 'Фулстек-разработчик, четыре года опыта на Laravel и WordPress.',
+        'city_id' => City::factory()->create()->id,
+        'description' => 'Мастер-отделочник, восемь лет: плитка, покраска, ванные под ключ.',
         'categories' => [$section->id],
     ])->assertSessionHasErrors('categories.0');
 });
@@ -120,4 +125,13 @@ it('shows the public pages', function () {
     $this->get('/')->assertOk()->assertSee('Laravel');
     $this->get('/login')->assertOk();
     $this->get('/register?role=executor')->assertOk()->assertSee('Специализации');
+});
+
+it('offers the list of cities on the registration page', function () {
+    City::factory()->create(['name' => 'Екатеринбург']);
+
+    $this->get('/register?role=executor')
+        ->assertOk()
+        ->assertSee('Выберите город')
+        ->assertSee('Екатеринбург');
 });

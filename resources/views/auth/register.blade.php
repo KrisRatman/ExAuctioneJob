@@ -10,7 +10,7 @@
                 <legend class="text-sm font-bold text-slate-700">Я хочу</legend>
                 <div class="mt-2 grid gap-3 sm:grid-cols-2">
                     @foreach ([
-                        ['customer', 'Разместить заказ', 'Опишу задачу и выберу исполнителя', 'heroicon-o-clipboard-document-list'],
+                        ['customer', 'Найти мастера', 'Опишу задачу и выберу исполнителя', 'heroicon-o-clipboard-document-list'],
                         ['executor', 'Выполнять заказы', 'Буду предлагать цену и срок', 'heroicon-o-wrench-screwdriver'],
                     ] as [$value, $label, $text, $icon])
                         <label class="flex cursor-pointer gap-3 rounded-xl border p-4 transition"
@@ -47,6 +47,10 @@
 
             <template x-if="role === 'executor'">
                 <div class="space-y-6 border-t border-slate-100 pt-6">
+                    <x-field label="Город" for="city_id" hint="В ленте будут заказы только из этого города.">
+                        <x-city-select id="city_id" name="city_id" :cities="$cities" :selected="old('city_id')" class="sm:max-w-xs" />
+                    </x-field>
+
                     <x-field label="О себе" for="description" hint="Чем занимаетесь, опыт, примеры работ. Это увидит заказчик рядом с вашим предложением.">
                         <textarea id="description" name="description" rows="5" class="input">{{ old('description') }}</textarea>
                     </x-field>

@@ -3,6 +3,7 @@
 namespace App\Livewire\Executor;
 
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Review;
 use App\Support\TagRules;
 use Illuminate\Contracts\View\View;
@@ -14,7 +15,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 /**
- * Анкета исполнителя: от тегов зависит, какие заказы он видит в ленте.
+ * Анкета исполнителя: от города и тегов зависит, какие заказы он видит в ленте.
  */
 #[Layout('layouts.app')]
 #[Title('Мой профиль')]
@@ -23,6 +24,8 @@ class EditProfile extends Component
     public string $name = '';
 
     public string $phone = '';
+
+    public ?int $cityId = null;
 
     public string $description = '';
 
@@ -35,6 +38,7 @@ class EditProfile extends Component
 
         $this->name = $user->name;
         $this->phone = (string) $user->phone;
+        $this->cityId = $user->executorProfile?->city_id;
         $this->description = (string) $user->executorProfile?->description;
         $this->categoryIds = $user->categories->modelKeys();
     }
@@ -44,6 +48,13 @@ class EditProfile extends Component
     public function tree(): Collection
     {
         return Category::tree();
+    }
+
+    /** @return Collection<int, City> */
+    #[Computed]
+    public function cities(): Collection
+    {
+        return City::options();
     }
 
     /** @return Collection<int, Review> */
@@ -58,12 +69,14 @@ class EditProfile extends Component
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[\d\s()\-]{10,20}$/'],
+            'cityId' => ['required', 'integer', 'exists:cities,id'],
             'description' => ['required', 'string', 'min:30', 'max:3000'],
             'categoryIds' => TagRules::executor(),
             'categoryIds.*' => TagRules::each(),
         ], [
             'phone.regex' => 'Укажите телефон в формате +7 900 000-00-00.',
             'categoryIds.required' => 'Отметьте хотя бы одну специализацию — по ним подбираются заказы.',
+            'cityId.required' => 'Укажите город — в ленте будут заказы только из него.',
         ], [
             'categoryIds' => 'специализации',
             'description' => 'о себе',
@@ -73,7 +86,7 @@ class EditProfile extends Component
 
         DB::transaction(function () use ($user, $data) {
             $user->update(['name' => trim($data['name']), 'phone' => $data['phone'] ?: null]);
-            $user->executorProfile()->updateOrCreate([], ['description' => trim($data['description'])]);
+            $user->executorProfile()->updateOrCreate([], ['city_id' => (int) $data['cityId'], 'description' => trim($data['description'])]);
             $user->categories()->sync(array_map(intval(...), $data['categoryIds']));
         });
 

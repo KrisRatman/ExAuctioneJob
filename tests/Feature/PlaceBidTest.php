@@ -5,6 +5,7 @@ use App\Enums\BidStatus;
 use App\Exceptions\AuctionException;
 use App\Livewire\Executor\Feed;
 use App\Models\Bid;
+use App\Models\City;
 use App\Models\Order;
 use App\Models\User;
 use Livewire\Features\SupportTesting\Testable;
@@ -105,7 +106,18 @@ it('does not accept bids from executors without a matching tag', function () {
         'approach_description' => 'Подход',
         'duration_days' => 3,
     ]);
-})->throws(AuctionException::class, 'не подходит под теги');
+})->throws(AuctionException::class, 'не подходит под город или теги');
+
+it('does not accept bids from executors in another city', function () {
+    $stranger = User::factory()->executor($this->tag)->create();
+    $stranger->executorProfile->update(['city_id' => City::factory()->create()->id]);
+
+    app(PlaceBid::class)->handle($stranger, $this->order, [
+        'offer_price' => 14000,
+        'approach_description' => 'Подход',
+        'duration_days' => 3,
+    ]);
+})->throws(AuctionException::class, 'не подходит под город или теги');
 
 it('does not accept bids from customers', function () {
     $customer = User::factory()->customer()->create();

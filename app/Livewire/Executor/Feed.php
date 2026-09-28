@@ -6,6 +6,7 @@ use App\Actions\PlaceBid;
 use App\Enums\OrderStatus;
 use App\Exceptions\AuctionException;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Order;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -19,7 +20,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Лента исполнителя: открытые заказы, у которых есть хотя бы один его тег.
+ * Лента исполнителя: открытые заказы в его городе, у которых есть хотя бы один его тег.
  * Клик по заказу — модалка с описанием и формой предложения.
  */
 #[Layout('layouts.app')]
@@ -54,17 +55,26 @@ class Feed extends Component
         $this->resetPage();
     }
 
+    /** Город из анкеты: лента показывает заказы только из него. */
+    #[Computed]
+    public function myCity(): ?City
+    {
+        return auth()->user()->executorProfile?->city;
+    }
+
     /** @return Collection<int, Category> */
     #[Computed]
     public function myTags(): Collection
     {
         return auth()->user()->categories()
-            ->withCount(['orders as open_orders_count' => fn ($q) => $q->where('status', OrderStatus::Open)])
+            ->withCount(['orders as open_orders_count' => fn ($q) => $q
+                ->where('status', OrderStatus::Open)
+                ->where('orders.city_id', $this->myCity?->id)])
             ->orderBy('name')
             ->get();
     }
 
-    /** Сколько открытых заказов подходит под теги исполнителя. */
+    /** Сколько открытых заказов подходит под город и теги исполнителя. */
     #[Computed]
     public function totalCount(): int
     {
@@ -102,7 +112,7 @@ class Feed extends Component
         }
 
         return $this->visibleOrders()
-            ->with(['categories', 'customer', 'bids' => fn ($q) => $q->where('executor_id', auth()->id())])
+            ->with(['city', 'categories', 'customer', 'bids' => fn ($q) => $q->where('executor_id', auth()->id())])
             ->withCount('bids')
             ->find($this->openOrderId);
     }

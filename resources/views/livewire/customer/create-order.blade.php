@@ -5,12 +5,16 @@
     <x-page-header title="Новый заказ" class="mt-3" />
 
     <form wire:submit="save" class="card mt-5 space-y-6 p-5 sm:mt-6 sm:p-8">
-        <x-field label="Что нужно сделать" for="title" hint="Коротко, например: «Сверстать лендинг по макету в Figma»">
+        <x-field label="Что нужно сделать" for="title" hint="Коротко, например: «Уложить плитку в ванной, 6 м²»">
             <input id="title" wire:model="title" maxlength="150" class="input">
         </x-field>
 
-        <x-field label="Описание задачи" for="description" hint="Подробности, требования, сроки, ссылки на примеры.">
+        <x-field label="Описание задачи" for="description" hint="Объём работ, материалы (чьи), когда удобно, район. Точный адрес не пишите — его увидит только выбранный мастер в чате.">
             <textarea id="description" wire:model="description" rows="7" class="input"></textarea>
+        </x-field>
+
+        <x-field label="Город" for="cityId" hint="Заказ увидят только мастера из этого города.">
+            <x-city-select id="cityId" model="cityId" :cities="$this->cities" :selected="$cityId" class="max-w-xs" />
         </x-field>
 
         <x-field label="Стартовая цена, ₽" for="startingPrice" hint="Исполнители смогут предложить меньше или больше — но не дороже этой цены плюс {{ rub(config('ideajob.max_bid_markup')) }}.">
@@ -19,7 +23,7 @@
 
         <div>
             <div class="text-sm font-bold text-slate-700">Теги</div>
-            <p class="mt-0.5 text-xs text-slate-500">Заказ увидят исполнители хотя бы с одним из этих тегов.</p>
+            <p class="mt-0.5 text-xs text-slate-500">Заказ увидят мастера хотя бы с одним из этих тегов.</p>
             <x-tag-picker :tree="$this->tree" :max="config('ideajob.order_tags.max')" model="categoryIds" class="mt-3" />
             @error('categoryIds') <p class="mt-1.5 text-sm font-medium text-brand-700">{{ $message }}</p> @enderror
             @error('categoryIds.*') <p class="mt-1.5 text-sm font-medium text-brand-700">{{ $message }}</p> @enderror

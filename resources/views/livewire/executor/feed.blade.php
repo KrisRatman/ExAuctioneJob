@@ -1,5 +1,5 @@
 <div class="mx-auto max-w-6xl px-4 py-6 sm:py-10">
-    <x-page-header title="Лента заказов">
+    <x-page-header title="Лента заказов" :subtitle="$this->myCity ? 'Заказы в городе '.$this->myCity->name : null">
         <x-slot:actions>
             <label class="relative hidden w-72 sm:block">
                 <span class="sr-only">Поиск по заказам</span>
@@ -9,7 +9,12 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if ($this->myTags->isEmpty())
+    @if ($this->myCity === null)
+        <x-empty-state class="mt-6" icon="heroicon-o-map-pin" title="В профиле не указан город"
+                       text="Работа очная — заказы показываются только из вашего города.">
+            <a href="{{ route('executor.profile') }}" class="btn-primary">Указать город</a>
+        </x-empty-state>
+    @elseif ($this->myTags->isEmpty())
         <x-empty-state class="mt-6" icon="heroicon-o-tag" title="В профиле не отмечены специализации"
                        text="Заказы подбираются по совпадению тегов — без них лента пуста.">
             <a href="{{ route('executor.profile') }}" class="btn-primary">Выбрать специализации</a>
@@ -83,7 +88,7 @@
                         </article>
                     @empty
                         <x-empty-state title="Подходящих заказов пока нет"
-                                       text="Новые заказы с вашими тегами появятся здесь. Добавьте специализации, чтобы видеть больше." >
+                                       text="Новые заказы из вашего города с вашими тегами появятся здесь. Добавьте специализации, чтобы видеть больше." >
                             <a href="{{ route('executor.profile') }}" class="btn-secondary">Изменить теги</a>
                         </x-empty-state>
                     @endforelse
@@ -104,7 +109,7 @@
                 <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
                     <div class="min-w-0">
                         <h2 id="modal-title" class="text-lg font-extrabold tracking-tight sm:text-xl">{{ $order->title }}</h2>
-                        <div class="mt-1 text-xs text-slate-500">{{ $order->customer->name }} · {{ $order->bids_count }} {{ plural($order->bids_count, 'предложение', 'предложения', 'предложений') }}</div>
+                        <div class="mt-1 text-xs text-slate-500">{{ $order->city->name }} · {{ $order->customer->name }} · {{ $order->bids_count }} {{ plural($order->bids_count, 'предложение', 'предложения', 'предложений') }}</div>
                     </div>
                     <button type="button" wire:click="close" class="-mr-1 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-ink" aria-label="Закрыть">
                         <x-heroicon-o-x-mark class="size-6" />

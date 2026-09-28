@@ -67,6 +67,7 @@ class UserResource extends Resource
                 ->relationship('executorProfile')
                 ->visible(fn (?User $record) => $record?->isExecutor())
                 ->schema([
+                    Select::make('city_id')->label('Город')->relationship('city', 'name')->searchable()->preload()->required(),
                     Textarea::make('description')->label('О себе')->rows(5)->required()->maxLength(3000),
                 ]),
             Section::make('Специализации')

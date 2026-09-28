@@ -13,12 +13,13 @@ use Illuminate\Support\Facades\DB;
 class CreateOrder
 {
     /**
-     * @param  array{title: string, description: string, starting_price: int, category_ids: list<int>}  $data
+     * @param  array{city_id: int, title: string, description: string, starting_price: int, category_ids: list<int>}  $data
      */
     public function handle(User $customer, array $data): Order
     {
         return DB::transaction(function () use ($customer, $data) {
             $order = $customer->customerOrders()->create([
+                'city_id' => $data['city_id'],
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'starting_price' => $data['starting_price'],

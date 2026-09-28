@@ -14,7 +14,7 @@ class HomeController extends Controller
             'tree' => Category::tree(),
             'openOrdersCount' => Order::query()->open()->count(),
             // Свежие заказы — сразу показывают исполнителю, что на бирже есть работа.
-            'latestOrders' => Order::query()->open()->with('categories')->withCount('bids')->latest()->limit(5)->get(),
+            'latestOrders' => Order::query()->open()->with(['city', 'categories'])->withCount('bids')->latest()->limit(5)->get(),
         ]);
     }
 }

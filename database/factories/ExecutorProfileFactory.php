@@ -18,6 +18,7 @@ class ExecutorProfileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'city_id' => fn () => CityFactory::defaultId(),
             'description' => fake()->realText(300),
             'rating_avg' => null,
             'reviews_count' => 0,

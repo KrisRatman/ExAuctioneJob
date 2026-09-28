@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Задача заказчика. Пока статус open — принимает предложения исполнителей.
  */
-#[Fillable(['customer_id', 'executor_id', 'title', 'description', 'starting_price', 'status', 'accepted_at', 'delivered_at', 'completed_at', 'cancelled_at'])]
+#[Fillable(['customer_id', 'executor_id', 'city_id', 'title', 'description', 'starting_price', 'status', 'accepted_at', 'delivered_at', 'completed_at', 'cancelled_at'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -53,6 +53,16 @@ class Order extends Model
     public function executor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'executor_id');
+    }
+
+    /**
+     * Город, где нужно выполнить работу.
+     *
+     * @return BelongsTo<City, $this>
+     */
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     /** @return BelongsToMany<Category, $this> */
@@ -119,14 +129,18 @@ class Order extends Model
     }
 
     /**
-     * Заказы, у которых есть хотя бы один тег из профиля исполнителя.
+     * Заказы в городе исполнителя, у которых есть хотя бы один тег из его профиля.
+     * Исполнитель без города не видит ничего: работа очная.
      *
      * @param  Builder<Order>  $query
      */
     #[Scope]
     protected function matchingExecutor(Builder $query, User $executor): void
     {
-        $query->whereHas('categories', fn (Builder $q) => $q->whereIn(
+        $query->where(
+            'orders.city_id',
+            ExecutorProfile::query()->select('city_id')->where('user_id', $executor->id),
+        )->whereHas('categories', fn (Builder $q) => $q->whereIn(
             'categories.id',
             DB::table('executor_category')->select('category_id')->where('user_id', $executor->id),
         ));

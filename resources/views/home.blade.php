@@ -3,10 +3,10 @@
         <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[1.15fr_1fr] md:items-center md:py-16">
             <div>
                 <h1 class="text-3xl leading-tight font-extrabold tracking-tight text-balance sm:text-[2.75rem]">
-                    Назовите задачу и&nbsp;цену&nbsp;— <span class="text-brand-600">исполнители предложат свои условия</span>
+                    Назовите задачу и&nbsp;цену&nbsp;— <span class="text-brand-600">мастера предложат свои условия</span>
                 </h1>
                 <p class="mt-4 max-w-xl text-base text-slate-600 sm:text-lg">
-                    Без каталога услуг и переписки с десятком фрилансеров. Сравните цену, срок и рейтинг — и выберите одного.
+                    Плитка, сантехника, ремонт холодильника или сборка шкафа — без обзвона десятка мастеров. Сравните цену, срок и рейтинг — и выберите одного.
                 </p>
                 <div class="mt-7 flex flex-col gap-3 sm:flex-row">
                     <a href="{{ route('register', ['role' => 'customer']) }}" class="btn-primary px-6 py-3 text-base">Разместить заказ</a>
@@ -16,9 +16,9 @@
 
             <ol class="space-y-4">
                 @foreach ([
-                    ['Опишите задачу', 'Название, описание, до трёх тегов и стартовая цена.', 'heroicon-o-pencil-square'],
-                    ['Получите предложения', 'Заказ видят только специалисты с подходящими тегами.', 'heroicon-o-hand-raised'],
-                    ['Выберите исполнителя', 'По цене, сроку, рейтингу и подходу к задаче — дальше общение в чате.', 'heroicon-o-check-badge'],
+                    ['Опишите задачу', 'Что сделать, город, до трёх тегов и стартовая цена.', 'heroicon-o-pencil-square'],
+                    ['Получите предложения', 'Заказ видят только мастера из вашего города с подходящими тегами.', 'heroicon-o-hand-raised'],
+                    ['Выберите мастера', 'По цене, сроку, рейтингу и подходу к задаче — адрес и время визита обсудите в чате.', 'heroicon-o-check-badge'],
                 ] as [$step, $text, $icon])
                     <li class="flex gap-4">
                         <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
@@ -53,7 +53,7 @@
                                 @foreach ($order->categories as $tag)
                                     <span class="tag">{{ $tag->name }}</span>
                                 @endforeach
-                                <span class="text-xs text-slate-400">· {{ $order->created_at->diffForHumans() }}</span>
+                                <span class="text-xs text-slate-400">· {{ $order->city->name }} · {{ $order->created_at->diffForHumans() }}</span>
                             </div>
                         </div>
                         <div class="flex items-baseline justify-between gap-4 sm:block sm:text-right">

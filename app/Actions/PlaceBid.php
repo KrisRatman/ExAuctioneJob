@@ -30,7 +30,7 @@ class PlaceBid
             }
 
             if (! $executor->isExecutor() || ! Order::query()->whereKey($order->id)->matchingExecutor($executor)->exists()) {
-                throw new AuctionException('Этот заказ не подходит под теги вашего профиля.');
+                throw new AuctionException('Этот заказ не подходит под город или теги вашего профиля.');
             }
 
             if ($data['offer_price'] > $order->maxOfferPrice()) {

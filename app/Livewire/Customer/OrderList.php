@@ -45,7 +45,7 @@ class OrderList extends Component
                 fn ($q) => $q->whereIn('status', self::archiveStatuses()),
                 fn ($q) => $q->whereNotIn('status', self::archiveStatuses()),
             )
-            ->with(['categories', 'executor'])
+            ->with(['city', 'categories', 'executor'])
             ->withCount(['bids as pending_bids_count' => fn ($q) => $q->where('status', BidStatus::Pending)])
             ->latest()
             ->paginate(10);

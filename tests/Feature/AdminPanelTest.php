@@ -3,10 +3,13 @@
 use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Filament\Resources\Categories\Pages\EditCategory;
 use App\Filament\Resources\Categories\Pages\ListCategories;
+use App\Filament\Resources\Cities\Pages\CreateCity;
+use App\Filament\Resources\Cities\Pages\ListCities;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\BidsRelationManager;
 use App\Models\Bid;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Order;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
@@ -30,21 +33,23 @@ it('renders every admin page', function (string $path) {
 })->with([
     '/admin/categories',
     '/admin/categories/create',
+    '/admin/cities',
+    '/admin/cities/create',
     '/admin/users',
     '/admin/orders',
     '/admin/orders/{order}',
 ]);
 
 it('creates a tag inside a section', function () {
-    $section = Category::factory()->create(['name' => 'Веб-разработка']);
+    $section = Category::factory()->create(['name' => 'Ремонт техники']);
 
     Livewire::actingAs($this->admin)
         ->test(CreateCategory::class)
-        ->fillForm(['name' => 'Symfony', 'slug' => 'symfony', 'parent_id' => $section->id, 'sort' => 60])
+        ->fillForm(['name' => 'Микроволновки', 'slug' => 'mikrovolnovki', 'parent_id' => $section->id, 'sort' => 60])
         ->call('create')
         ->assertHasNoFormErrors();
 
-    expect(Category::query()->where('slug', 'symfony')->sole()->parent_id)->toBe($section->id);
+    expect(Category::query()->where('slug', 'mikrovolnovki')->sole()->parent_id)->toBe($section->id);
 });
 
 it('lists sections followed by their tags', function () {
@@ -90,4 +95,25 @@ it('shows the bids of an order', function () {
         ->test(BidsRelationManager::class, ['ownerRecord' => $order, 'pageClass' => ViewOrder::class])
         ->assertCanSeeTableRecords([$bid])
         ->assertSee($bid->executor->name);
+});
+
+it('creates a city', function () {
+    Livewire::actingAs($this->admin)
+        ->test(CreateCity::class)
+        ->fillForm(['name' => 'Тюмень', 'slug' => 'tyumen'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(City::query()->where('slug', 'tyumen')->sole()->name)->toBe('Тюмень');
+});
+
+it('hides delete for a city that is in use', function () {
+    $used = City::factory()->create();
+    Order::factory()->create(['city_id' => $used->id]);
+    $unused = City::factory()->create();
+
+    Livewire::actingAs($this->admin)
+        ->test(ListCities::class)
+        ->assertActionHidden(TestAction::make('delete')->table($used))
+        ->assertActionVisible(TestAction::make('delete')->table($unused));
 });

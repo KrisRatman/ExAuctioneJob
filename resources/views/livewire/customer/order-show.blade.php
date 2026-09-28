@@ -10,6 +10,7 @@
         <section class="card p-5 sm:p-6 lg:sticky lg:top-24" aria-labelledby="order-title">
             <div class="flex flex-wrap items-center gap-2">
                 <span class="badge {{ $order->status->badgeClasses() }}">{{ $order->status->getLabel() }}</span>
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500"><x-heroicon-o-map-pin class="size-3.5" /> {{ $order->city->name }}</span>
                 <span class="text-xs text-slate-400">{{ $order->created_at->translatedFormat('j F Y, H:i') }}</span>
             </div>
             <h1 id="order-title" class="mt-3 text-xl font-extrabold tracking-tight sm:text-2xl">{{ $order->title }}</h1>

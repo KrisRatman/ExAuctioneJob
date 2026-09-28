@@ -13,6 +13,9 @@
             <x-field label="Телефон" for="phone" hint="Необязательно">
                 <input id="phone" type="tel" wire:model="phone" placeholder="+7 900 000-00-00" class="input">
             </x-field>
+            <x-field label="Город" for="cityId" hint="В ленте будут заказы только из этого города.">
+                <x-city-select id="cityId" model="cityId" :cities="$this->cities" :selected="$cityId" />
+            </x-field>
         </div>
 
         <x-field label="О себе" for="description" hint="Чем занимаетесь, опыт, примеры работ.">

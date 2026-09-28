@@ -57,6 +57,7 @@ class OrderResource extends Resource
                     ->columnSpan(1)
                     ->schema([
                         TextEntry::make('status')->label('Статус')->badge(),
+                        TextEntry::make('city.name')->label('Город'),
                         TextEntry::make('starting_price')->label('Стартовая цена')->formatStateUsing(fn (int $state) => rub($state)),
                         TextEntry::make('customer.name')->label('Заказчик')->helperText(fn (Order $record) => $record->customer->email),
                         TextEntry::make('executor.name')->label('Исполнитель')->placeholder('не выбран'),
@@ -70,7 +71,7 @@ class OrderResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['customer', 'executor'])->withCount('bids'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['city', 'customer', 'executor'])->withCount('bids'))
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('title')
@@ -81,6 +82,8 @@ class OrderResource extends Resource
                 TextColumn::make('status')
                     ->label('Статус')
                     ->badge(),
+                TextColumn::make('city.name')
+                    ->label('Город'),
                 TextColumn::make('starting_price')
                     ->label('Цена')
                     ->formatStateUsing(fn (int $state) => rub($state))
@@ -98,6 +101,7 @@ class OrderResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')->label('Статус')->options(OrderStatus::class),
+                SelectFilter::make('city')->label('Город')->relationship('city', 'name')->searchable()->preload(),
             ])
             ->recordActions([
                 ViewAction::make(),

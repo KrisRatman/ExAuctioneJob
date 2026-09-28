@@ -116,7 +116,7 @@ class OrderShow extends Component
 
     public function render(): View
     {
-        $this->order->loadMissing(['categories', 'executor', 'conversation']);
+        $this->order->loadMissing(['city', 'categories', 'executor', 'conversation']);
 
         return view('livewire.customer.order-show')->title($this->order->title);
     }

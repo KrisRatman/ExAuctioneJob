@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Executor\Feed;
+use App\Models\City;
 use App\Models\Order;
 use App\Models\User;
 use Livewire\Livewire;
@@ -67,4 +68,28 @@ it('shows each order once even when several tags match', function () {
     $component = Livewire::actingAs($this->executor)->test(Feed::class);
 
     expect($component->instance()->orders->total())->toBe(1);
+});
+
+it('shows only orders from the executor city', function () {
+    $moscow = City::factory()->create(['name' => 'Москва']);
+    Order::factory()->withTags($this->laravel)->create(['title' => 'Заказ в моём городе']);
+    Order::factory()->withTags($this->laravel)->create(['title' => 'Заказ в Москве', 'city_id' => $moscow->id]);
+
+    $component = Livewire::actingAs($this->executor)
+        ->test(Feed::class)
+        ->assertSee('Заказ в моём городе')
+        ->assertDontSee('Заказ в Москве');
+
+    expect($component->instance()->totalCount)->toBe(1)
+        ->and($component->instance()->myTags->firstWhere('id', $this->laravel->id)->open_orders_count)->toBe(1);
+});
+
+it('asks an executor without a city to set it in the profile', function () {
+    Order::factory()->withTags($this->laravel)->create(['title' => 'Заказ на Laravel']);
+    $this->executor->executorProfile->update(['city_id' => null]);
+
+    Livewire::actingAs($this->executor)
+        ->test(Feed::class)
+        ->assertSee('В профиле не указан город')
+        ->assertDontSee('Заказ на Laravel');
 });

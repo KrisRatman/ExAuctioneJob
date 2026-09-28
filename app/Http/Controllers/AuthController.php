@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\User;
 use App\Support\TagRules;
 use Illuminate\Contracts\View\View;
@@ -43,11 +44,12 @@ class AuthController extends Controller
         return view('auth.register', [
             'role' => $request->query('role') === UserRole::Executor->value ? UserRole::Executor : UserRole::Customer,
             'tree' => Category::tree(),
+            'cities' => City::options(),
         ]);
     }
 
     /**
-     * Регистрация заказчика или исполнителя. Исполнитель сразу заполняет анкету и теги —
+     * Регистрация заказчика или исполнителя. Исполнитель сразу заполняет анкету, город и теги —
      * без них лента заказов для него пуста.
      */
     public function register(Request $request): RedirectResponse
@@ -61,11 +63,13 @@ class AuthController extends Controller
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[\d\s()\-]{10,20}$/'],
             'password' => ['required', 'confirmed', Password::min(8)],
             'description' => [Rule::requiredIf($isExecutor), 'nullable', 'string', 'min:30', 'max:3000'],
+            'city_id' => $isExecutor ? ['required', 'integer', 'exists:cities,id'] : ['prohibited'],
             'categories' => $isExecutor ? TagRules::executor() : ['prohibited'],
             'categories.*' => TagRules::each(),
         ], [
             'phone.regex' => 'Укажите телефон в формате +7 900 000-00-00.',
             'categories.required' => 'Отметьте хотя бы одну специализацию — по ним подбираются заказы.',
+            'city_id.required' => 'Укажите город — в ленте будут заказы только из него.',
         ]);
 
         $user = DB::transaction(function () use ($data, $isExecutor) {
@@ -78,7 +82,7 @@ class AuthController extends Controller
             ]);
 
             if ($isExecutor) {
-                $user->executorProfile()->create(['description' => $data['description']]);
+                $user->executorProfile()->create(['city_id' => $data['city_id'], 'description' => $data['description']]);
                 $user->categories()->attach($data['categories']);
             }
 

@@ -21,6 +21,7 @@ class OrderFactory extends Factory
         return [
             'customer_id' => User::factory()->customer(),
             'executor_id' => null,
+            'city_id' => fn () => CityFactory::defaultId(),
             'title' => rtrim(fake()->sentence(5), '.'),
             'description' => fake()->realText(400),
             'starting_price' => fake()->numberBetween(10, 300) * 100,

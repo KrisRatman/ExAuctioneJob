@@ -4,24 +4,27 @@ use App\Enums\OrderStatus;
 use App\Livewire\Customer\CreateOrder;
 use App\Models\Bid;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Order;
 use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function () {
     $this->customer = User::factory()->customer()->create();
+    $this->city = City::factory()->create(['name' => 'Екатеринбург']);
 });
 
-it('publishes an order with tags and a starting price', function () {
-    $laravel = tag('Laravel');
-    $markup = tag('Вёрстка');
+it('publishes an order with a city, tags and a starting price', function () {
+    $tiles = tag('Укладка плитки');
+    $plumbing = tag('Установка сантехники');
 
     Livewire::actingAs($this->customer)
         ->test(CreateOrder::class)
-        ->set('title', 'Сайт-меню для кофейни')
-        ->set('description', 'Нужен простой сайт с меню, ценами и админкой для изменения позиций.')
+        ->set('title', 'Уложить плитку в ванной')
+        ->set('description', 'Стены и пол в ванной, плитка уже куплена, нужна ещё установка ревизионного люка.')
         ->set('startingPrice', 40000)
-        ->set('categoryIds', [$laravel->id, $markup->id])
+        ->set('cityId', $this->city->id)
+        ->set('categoryIds', [$tiles->id, $plumbing->id])
         ->call('save')
         ->assertHasNoErrors()
         ->assertRedirect(route('customer.orders.show', Order::query()->firstOrFail()));
@@ -30,8 +33,19 @@ it('publishes an order with tags and a starting price', function () {
 
     expect($order->customer_id)->toBe($this->customer->id)
         ->and($order->status)->toBe(OrderStatus::Open)
+        ->and($order->city_id)->toBe($this->city->id)
         ->and($order->starting_price)->toBe(40000)
-        ->and($order->categories->modelKeys())->toEqualCanonicalizing([$laravel->id, $markup->id]);
+        ->and($order->categories->modelKeys())->toEqualCanonicalizing([$tiles->id, $plumbing->id]);
+});
+
+it('suggests the city of the previous order', function () {
+    $other = City::factory()->create();
+    Order::factory()->for($this->customer, 'customer')->create(['city_id' => $this->city->id]);
+    Order::factory()->for($this->customer, 'customer')->create(['city_id' => $other->id]);
+
+    Livewire::actingAs($this->customer)
+        ->test(CreateOrder::class)
+        ->assertSet('cityId', $other->id);
 });
 
 it('validates the order form', function (array $overrides, string $errorField) {
@@ -40,9 +54,10 @@ it('validates the order form', function (array $overrides, string $errorField) {
     Livewire::actingAs($this->customer)
         ->test(CreateOrder::class)
         ->set([
-            'title' => 'Сайт-меню для кофейни',
-            'description' => 'Нужен простой сайт с меню, ценами и админкой для изменения позиций.',
+            'title' => 'Уложить плитку в ванной',
+            'description' => 'Стены и пол в ванной, плитка уже куплена, нужна ещё установка ревизионного люка.',
             'startingPrice' => 40000,
+            'cityId' => $this->city->id,
             'categoryIds' => [$tags[0]->id],
             ...array_map(fn ($value) => $value instanceof Closure ? $value($tags) : $value, $overrides),
         ])
@@ -56,6 +71,8 @@ it('validates the order form', function (array $overrides, string $errorField) {
     'a section instead of a tag' => [['categoryIds' => fn ($tags) => [$tags[0]->parent_id]], 'categoryIds.0'],
     'price below minimum' => [['startingPrice' => 50], 'startingPrice'],
     'no price' => [['startingPrice' => null], 'startingPrice'],
+    'no city' => [['cityId' => null], 'cityId'],
+    'unknown city' => [['cityId' => 999_999], 'cityId'],
     'short description' => [['description' => 'Коротко'], 'description'],
 ]);
 

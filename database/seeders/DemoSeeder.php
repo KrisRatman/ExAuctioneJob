@@ -13,6 +13,7 @@ use App\Actions\PlaceBid;
 use App\Actions\SendMessage;
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\User;
@@ -21,7 +22,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Демо-биржа: заказчики, исполнители, заказы на аукционе и в работе.
+ * Демо-биржа: заказчики, мастера в Екатеринбурге и Москве, заказы на аукционе и в работе.
  * Идёт через те же действия, что и сайт, поэтому данные согласованы. Повторно не запускается.
  *
  * Доступы (пароль у всех — password): admin@example.com, customer@example.com, executor@example.com.
@@ -30,6 +31,9 @@ class DemoSeeder extends Seeder
 {
     /** @var Collection<string, Category> */
     private Collection $tags;
+
+    /** @var Collection<string, City> */
+    private Collection $cities;
 
     public function run(): void
     {
@@ -43,6 +47,7 @@ class DemoSeeder extends Seeder
         config(['broadcasting.default' => 'null', 'queue.default' => 'sync']);
 
         $this->tags = Category::query()->tags()->get()->keyBy('name');
+        $this->cities = City::query()->get()->keyBy('name');
 
         $this->user('Администратор', 'admin@example.com', UserRole::Admin);
 
@@ -53,51 +58,56 @@ class DemoSeeder extends Seeder
         ]);
 
         $executors = collect([
-            $this->executor('Дмитрий Ковалёв', 'executor@example.com',
-                'Фулстек-разработчик, 4 года на Laravel и WordPress. Верстаю по макетам Figma пиксель-в-пиксель, делаю интеграции с CRM и платёжками. Сдаю с README и инструкцией.',
-                ['Вёрстка (HTML/CSS/JS)', 'Laravel', 'WordPress', 'WooCommerce']),
-            $this->executor('Мария Орлова', 'maria@example.com',
-                'Веб-дизайнер. Лендинги, интернет-магазины, фирменный стиль. Работаю в Figma, отдаю макеты с UI-kit и адаптивом.',
-                ['Веб-дизайн (Figma)', 'Логотипы', 'Баннеры и полиграфия']),
-            $this->executor('Сергей Волков', 'sergey@example.com',
-                'Backend на PHP с 2016 года. Laravel, очереди, REST API, оптимизация медленных запросов MySQL.',
-                ['Laravel', 'Другие CMS']),
-            $this->executor('Екатерина Лебедева', 'kate@example.com',
-                'Копирайтер и SMM-специалист. Пишу продающие тексты для сайтов, веду соцсети малого бизнеса, составляю контент-планы.',
-                ['Тексты для сайтов', 'SEO-тексты', 'Посты для соцсетей', 'SMM']),
-            $this->executor('Артём Никитин', 'artem@example.com',
-                'Верстальщик и WordPress-разработчик. Быстро, аккуратно, с адаптивом и оптимизацией скорости.',
-                ['Вёрстка (HTML/CSS/JS)', 'WordPress', 'WooCommerce']),
-            $this->executor('Олег Морозов', 'oleg@example.com',
-                'Монтажёр и звукорежиссёр. Ролики для YouTube и рекламы, озвучка, чистка звука.',
-                ['Монтаж видео', 'Озвучка', 'Обработка звука']),
-            $this->executor('Полина Зайцева', 'polina@example.com',
-                'Unity-разработчик и 2D-художник. Прототипы, механики, пиксель-арт и UI для игр.',
-                ['Unity', '2D/3D-графика', 'Геймдизайн-документы']),
+            $this->executor('Дмитрий Ковалёв', 'executor@example.com', 'Екатеринбург',
+                'Мастер-отделочник, 8 лет в ремонте. Плитка и керамогранит, выравнивание и покраска стен, ванные комнаты под ключ. Свой инструмент, убираю за собой, гарантия на работу — год.',
+                ['Укладка плитки', 'Штукатурка и шпаклёвка', 'Малярные работы', 'Напольные покрытия', 'Ремонт под ключ']),
+            $this->executor('Артём Никитин', 'artem@example.com', 'Екатеринбург',
+                'Плиточник и мастер по полам. Плитка, ламинат, кварцвинил, натяжные потолки. Работаю аккуратно и в срок.',
+                ['Укладка плитки', 'Напольные покрытия', 'Натяжные потолки']),
+            $this->executor('Сергей Волков', 'sergey@example.com', 'Екатеринбург',
+                'Ремонт холодильников и бытовой техники с 2012 года, в том числе торгового холодильного оборудования. Выезд в день обращения, диагностика бесплатно при ремонте.',
+                ['Холодильники', 'Стиральные машины', 'Посудомоечные машины', 'Плиты и духовки', 'Кондиционеры']),
+            $this->executor('Олег Морозов', 'oleg@example.com', 'Екатеринбург',
+                'Сантехник. Установка смесителей, унитазов, ванн и бойлеров, устранение засоров и протечек, разводка труб.',
+                ['Установка сантехники', 'Засоры и протечки', 'Отопление и водонагреватели']),
+            $this->executor('Мария Орлова', 'maria@example.com', 'Екатеринбург',
+                'Клининг квартир и офисов: поддерживающая и генеральная уборка, уборка после ремонта, химчистка диванов и ковров. Своя химия и оборудование.',
+                ['Уборка квартир', 'Уборка после ремонта', 'Химчистка мебели и ковров']),
+            $this->executor('Павел Зайцев', 'pavel@example.com', 'Екатеринбург',
+                'Электрик и мастер на час. Розетки, выключатели, люстры, щитки; повешу полки, карнизы, телевизор, соберу мелкую мебель.',
+                ['Электромонтаж', 'Розетки и светильники', 'Мелкий бытовой ремонт', 'Навеска полок и карнизов']),
+            $this->executor('Андрей Лебедев', 'andrey@example.com', 'Москва',
+                'Сборщик мебели: кухни, шкафы-купе, IKEA и мебель на заказ. Подниму на этаж, вывезу упаковку.',
+                ['Сборка мебели', 'Ремонт мебели', 'Мебель на заказ', 'Грузчики']),
         ])->keyBy('email');
 
         $orders = [
-            ['customer@example.com', 'Сверстать лендинг по макету в Figma', 'Нужна адаптивная вёрстка одностраничного лендинга (8 блоков) по готовому макету в Figma. Анимации при скролле, форма заявки с отправкой на почту. Макет и шрифты дам.', 15000, ['Вёрстка (HTML/CSS/JS)', 'Веб-дизайн (Figma)'],
-                [['executor@example.com', 14000, 5], ['artem@example.com', 12000, 4], ['maria@example.com', 16000, 7]]],
-            ['customer@example.com', 'Доработать интернет-магазин на WooCommerce', 'Магазин на WooCommerce: нужно подключить СДЭК, настроить фильтры товаров и ускорить загрузку каталога. Хостинг Beget.', 25000, ['WooCommerce', 'WordPress'],
-                [['artem@example.com', 24000, 10], ['executor@example.com', 26000, 8]]],
-            ['customer@example.com', 'Логотип и визитка для студии йоги', 'Нужен логотип (3 варианта на выбор) и макет визитки. Стиль — спокойный, природные цвета.', 8000, ['Логотипы', 'Баннеры и полиграфия'],
-                [['maria@example.com', 8500, 6]]],
-            ['customer@example.com', 'Тексты для 5 страниц сайта клининга', 'Главная, услуги, цены, о компании, контакты. Нужны продающие тексты с ключевыми словами.', 6000, ['Тексты для сайтов', 'SEO-тексты'], []],
-            ['coffee@example.com', 'Вести Instagram и VK кофейни месяц', 'Контент-план, 12 постов и сторис, ответы в директ. Фото предоставим.', 20000, ['SMM', 'Посты для соцсетей'],
-                [['kate@example.com', 19000, 30]]],
-            ['coffee@example.com', 'Сайт-меню кофейни на Laravel с админкой', 'Простой сайт с меню, ценами и фотографиями, админка для изменения позиций. Нужен QR-код на столы.', 40000, ['Laravel'],
-                [['sergey@example.com', 38000, 14], ['executor@example.com', 41000, 12]]],
-            ['igor@example.com', 'Смонтировать ролик для YouTube (15 минут)', 'Есть исходники 2 часа, нужен динамичный монтаж, титры, музыка, цветокоррекция.', 7000, ['Монтаж видео'],
-                [['oleg@example.com', 7500, 3]]],
-            ['igor@example.com', 'Прототип 2D-платформера на Unity', 'Нужен прототип: управление, 2 уровня, враги, сбор монет. Графика — ассеты из стора.', 50000, ['Unity', 'Геймдизайн-документы'],
-                [['polina@example.com', 48000, 21]]],
-            ['igor@example.com', 'Перенести сайт с Tilda на WordPress', 'Сайт из 10 страниц, нужно перенести дизайн и контент, настроить формы.', 18000, ['WordPress', 'Вёрстка (HTML/CSS/JS)'], []],
+            ['customer@example.com', 'Екатеринбург', 'Уложить плитку в ванной, 6 м²', 'Стены и пол в ванной, плитка 30×60 уже куплена. Старую плитку сняли, стены ровные. Нужна затирка и установка ревизионного люка. Район — Академический.', 45000, ['Укладка плитки'],
+                [['executor@example.com', 42000, 5], ['artem@example.com', 38000, 4]]],
+            ['customer@example.com', 'Екатеринбург', 'Выровнять и покрасить стены в спальне', 'Комната 14 м², стены после старых обоев, есть трещины. Нужно зашпаклевать, отшлифовать и покрасить в два слоя. Краску купим сами.', 25000, ['Малярные работы', 'Штукатурка и шпаклёвка'],
+                [['executor@example.com', 26000, 6]]],
+            ['igor@example.com', 'Екатеринбург', 'Ремонт ванной комнаты под ключ', 'Санузел совмещённый, 4 м². Демонтаж старой плитки, разводка труб, плитка на стены и пол, установка ванны и унитаза. Материалы закупаем вместе.', 150000, ['Ремонт под ключ', 'Укладка плитки'], []],
+            ['coffee@example.com', 'Екатеринбург', 'Постелить кварцвинил в зале кофейни, 35 м²', 'Основание — ровная стяжка. Кварцвинил замковый, куплен. Работать можно только ночью или в понедельник, когда кофейня закрыта.', 21000, ['Напольные покрытия'],
+                [['artem@example.com', 20000, 2]]],
+            ['igor@example.com', 'Екатеринбург', 'Покрасить потолок и откосы на кухне', 'Потолок 9 м² и два оконных откоса: подготовить, зашпаклевать трещины, покрасить белой матовой краской.', 7000, ['Малярные работы'], []],
+            ['customer@example.com', 'Екатеринбург', 'Не морозит холодильник Indesit', 'Двухкамерный Indesit, лет 7. Морозилка работает, в холодильной камере +12. Компрессор включается. Нужна диагностика и ремонт.', 3000, ['Холодильники'],
+                [['sergey@example.com', 3500, 1]]],
+            ['customer@example.com', 'Екатеринбург', 'Генеральная уборка после ремонта, 2 комнаты', 'Квартира 54 м²: строительная пыль, следы краски на окнах и полу, помыть кухню и санузел.', 8000, ['Уборка после ремонта', 'Уборка квартир'], []],
+            ['coffee@example.com', 'Екатеринбург', 'Заменить смеситель и сифон на кухне кофейни', 'Течёт смеситель, сифон под мойкой подтекает. Новый смеситель купим, нужен мастер утром до открытия (до 8:00).', 4000, ['Установка сантехники', 'Засоры и протечки'],
+                [['oleg@example.com', 4500, 1]]],
+            ['coffee@example.com', 'Екатеринбург', 'Починить витринный холодильник в кофейне', 'Витрина для десертов перестала охлаждать ночью, внутри +15. Нужен мастер с опытом торгового оборудования.', 12000, ['Холодильники'],
+                [['sergey@example.com', 11000, 2]]],
+            ['igor@example.com', 'Екатеринбург', 'Повесить люстру и 4 полки', 'Люстра на крюк (потолок бетонный), 4 полки на гипсокартон. Крепёж есть.', 3000, ['Розетки и светильники', 'Навеска полок и карнизов'],
+                [['pavel@example.com', 3000, 1]]],
+            ['igor@example.com', 'Москва', 'Собрать шкаф-купе и кухню IKEA', 'Шкаф-купе 2 м и кухня 3 м (METOD), всё привезено. Нужна сборка и навеска шкафов, врезка мойки.', 15000, ['Сборка мебели'],
+                [['andrey@example.com', 14000, 2]]],
+            ['igor@example.com', 'Екатеринбург', 'Поменять личинку замка входной двери', 'Потеряли ключ, нужно заменить личинку. Замок Mottura.', 2000, ['Замки и двери'], []],
         ];
 
-        foreach ($orders as $index => [$customerEmail, $title, $description, $price, $tagNames, $bids]) {
+        foreach ($orders as $index => [$customerEmail, $cityName, $title, $description, $price, $tagNames, $bids]) {
             $customer = $customers->firstWhere('email', $customerEmail);
             $order = app(CreateOrder::class)->handle($customer, [
+                'city_id' => $this->cities[$cityName]->id,
                 'title' => $title,
                 'description' => $description,
                 'starting_price' => $price,
@@ -107,7 +117,7 @@ class DemoSeeder extends Seeder
             foreach ($bids as [$executorEmail, $offer, $days]) {
                 app(PlaceBid::class)->handle($executors[$executorEmail], $order, [
                     'offer_price' => $offer,
-                    'approach_description' => $this->approach($days),
+                    'approach_description' => $this->approach(),
                     'duration_days' => $days,
                 ]);
             }
@@ -116,43 +126,43 @@ class DemoSeeder extends Seeder
             $this->age($order, hours: (count($orders) - $index) * 7);
         }
 
-        // Пара заказов уже в работе и один отменён — видно все статусы.
-        $cafeSite = Order::query()->where('title', 'like', 'Сайт-меню%')->firstOrFail();
-        $cafeChat = app(AcceptBid::class)->handle($cafeSite->customer()->firstOrFail(), $cafeSite->bids()->where('executor_id', $executors['sergey@example.com']->id)->firstOrFail());
+        // Витрина в кофейне: мастер отремонтировал, но заказчица не согласна — спор ждёт администратора.
+        $cafeFridge = Order::query()->where('title', 'like', 'Починить витринный%')->firstOrFail();
+        $cafeChat = app(AcceptBid::class)->handle($cafeFridge->customer()->firstOrFail(), $cafeFridge->bids()->where('executor_id', $executors['sergey@example.com']->id)->firstOrFail());
         $this->chat($cafeChat, [
-            ['customer', 'Здравствуйте! Выбрали вас. Когда сможете начать?'],
-            ['executor', 'Добрый день! Могу сегодня. Пришлите, пожалуйста, меню и фото блюд.'],
-            ['customer', 'Отправила на почту. QR-коды нужны на 12 столов.'],
-            ['executor', 'Принято. Первую версию покажу через 5 дней.'],
+            ['customer', 'Здравствуйте! Выбрали вас. Когда сможете приехать?'],
+            ['executor', 'Добрый день! Сегодня после 18:00. Напишите, пожалуйста, модель витрины.'],
+            ['customer', 'Carboma, ей три года. Вход со двора, адрес пришлю отдельным сообщением.'],
+            ['executor', 'Понял, возьму фреон и пусковое реле на всякий случай.'],
         ]);
 
-        // Кафе: исполнитель сдал работу, заказчица не согласна — спор ждёт администратора.
-        app(DeliverOrder::class)->handle($executors['sergey@example.com'], $cafeSite);
+        app(DeliverOrder::class)->handle($executors['sergey@example.com'], $cafeFridge);
         $this->chat($cafeChat, [
-            ['executor', 'Готово: сайт на тестовом домене, QR-коды в архиве. Отметил работу сданной.'],
-            ['customer', 'Админки для изменения цен нет, а она была в задаче. И QR-кодов 10, а не 12.'],
-            ['executor', 'Админка не входила в сумму, это отдельная работа.'],
+            ['executor', 'Заменил реле и дозаправил фреон, витрина держит +4. Отметил работу сданной.'],
+            ['customer', 'Через два дня витрина снова греется, десерты пришлось списать.'],
+            ['executor', 'Это уже другая неисправность — компрессор. Его замена в сумму не входила.'],
         ]);
-        app(OpenDispute::class)->handle($cafeSite->customer()->firstOrFail(), $cafeSite,
-            'В задаче явно указана админка для изменения позиций меню — её нет. QR-кодов 10 вместо 12. Исполнитель отказывается доделывать.');
+        app(OpenDispute::class)->handle($cafeFridge->customer()->firstOrFail(), $cafeFridge,
+            'Мастер взял деньги за ремонт, а через два дня витрина снова перестала охлаждать. Приехать повторно без доплаты отказывается.');
 
-        // Монтаж: сдан, принят и оценён.
-        $video = Order::query()->where('title', 'like', 'Смонтировать%')->firstOrFail();
-        $videoChat = app(AcceptBid::class)->handle($video->customer()->firstOrFail(), $video->bids()->firstOrFail());
-        $this->completeWithReview($videoChat, 5, 'Отличный монтаж, уложился в срок, учёл все правки.');
+        // Люстра и полки: сдано, принято и оценено.
+        $shelves = Order::query()->where('title', 'like', 'Повесить люстру%')->firstOrFail();
+        $shelvesChat = app(AcceptBid::class)->handle($shelves->customer()->firstOrFail(), $shelves->bids()->firstOrFail());
+        $this->completeWithReview($shelvesChat, 5, 'Приехал вовремя, всё ровно по уровню, убрал пыль за собой.');
 
         // История выполненных заказов — у исполнителей в карточках появляются рейтинг и отзывы.
         $history = [
-            ['igor@example.com', 'executor@example.com', 'Вёрстка корпоративного сайта по макету', 30000, ['Вёрстка (HTML/CSS/JS)'], 5, 'Сделано аккуратно, адаптив идеальный. Рекомендую.'],
-            ['coffee@example.com', 'executor@example.com', 'Интернет-магазин кофе на WooCommerce', 45000, ['WooCommerce'], 4, 'Всё работает, но сроки немного сдвинулись.'],
-            ['igor@example.com', 'executor@example.com', 'Лендинг для онлайн-курса на Laravel', 20000, ['Laravel'], 5, null],
-            ['coffee@example.com', 'artem@example.com', 'Ускорить сайт на WordPress', 9000, ['WordPress'], 4, 'Сайт стал грузиться заметно быстрее.'],
-            ['igor@example.com', 'maria@example.com', 'Дизайн лендинга в Figma', 18000, ['Веб-дизайн (Figma)'], 5, 'Очень красиво и с UI-kit, как договаривались.'],
-            ['coffee@example.com', 'kate@example.com', 'Тексты для сайта кофейни', 5000, ['Тексты для сайтов'], 3, 'Тексты хорошие, но пришлось дважды просить правки.'],
+            ['igor@example.com', 'executor@example.com', 'Плитка на кухонный фартук', 12000, ['Укладка плитки'], 5, 'Ровно, швы аккуратные, мусор вынес сам. Рекомендую.'],
+            ['coffee@example.com', 'executor@example.com', 'Отделка санузла в кофейне под ключ', 60000, ['Ремонт под ключ'], 4, 'Сделано хорошо, но закончил на два дня позже.'],
+            ['igor@example.com', 'executor@example.com', 'Шпаклёвка и покраска потолка', 9000, ['Малярные работы'], 5, null],
+            ['coffee@example.com', 'artem@example.com', 'Уложить ламинат в зале, 40 м²', 16000, ['Напольные покрытия'], 4, 'Быстро и аккуратно, пороги поставил.'],
+            ['igor@example.com', 'maria@example.com', 'Уборка квартиры после ремонта', 7000, ['Уборка после ремонта'], 5, 'Отмыли всё, даже окна и плитку от затирки.'],
+            ['coffee@example.com', 'oleg@example.com', 'Прочистить засор в кофейне', 2500, ['Засоры и протечки'], 3, 'Засор убрал, но приехал на час позже договорённого.'],
         ];
 
         foreach ($history as $index => [$customerEmail, $executorEmail, $title, $price, $tagNames, $rating, $comment]) {
             $order = app(CreateOrder::class)->handle($customers->firstWhere('email', $customerEmail), [
+                'city_id' => $this->cities['Екатеринбург']->id,
                 'title' => $title,
                 'description' => 'Выполненный заказ из истории демо-биржи.',
                 'starting_price' => $price,
@@ -160,24 +170,24 @@ class DemoSeeder extends Seeder
             ]);
             $bid = app(PlaceBid::class)->handle($executors[$executorEmail], $order, [
                 'offer_price' => $price,
-                'approach_description' => $this->approach(7),
-                'duration_days' => 7,
+                'approach_description' => $this->approach(),
+                'duration_days' => 2,
             ]);
             $chat = app(AcceptBid::class)->handle($order->customer()->firstOrFail(), $bid);
             $this->completeWithReview($chat, $rating, $comment);
             $this->age($order, hours: 24 * (40 - $index * 5));
         }
 
-        // Заказчик из демо-доступа тоже сразу видит чат: принимает Дмитрия по WooCommerce.
-        $shop = Order::query()->where('title', 'like', 'Доработать интернет-магазин%')->firstOrFail();
-        $shopChat = app(AcceptBid::class)->handle($shop->customer()->firstOrFail(), $shop->bids()->where('executor_id', $executors['executor@example.com']->id)->firstOrFail());
-        $this->chat($shopChat, [
-            ['customer', 'Дмитрий, добрый день! Доступы к хостингу пришлю в личном сообщении на почту.'],
-            ['executor', 'Здравствуйте! Начну со СДЭК, потом фильтры и скорость. Вопрос: какие тарифы СДЭК показывать?'],
+        // Заказчик из демо-доступа тоже сразу видит чат: принимает Дмитрия на покраску стен.
+        $walls = Order::query()->where('title', 'like', 'Выровнять и покрасить%')->firstOrFail();
+        $wallsChat = app(AcceptBid::class)->handle($walls->customer()->firstOrFail(), $walls->bids()->where('executor_id', $executors['executor@example.com']->id)->firstOrFail());
+        $this->chat($wallsChat, [
+            ['customer', 'Дмитрий, добрый день! Удобно начать в субботу? Адрес пришлю отдельным сообщением.'],
+            ['executor', 'Здравствуйте! Да, в субботу в 10:00. Краску купите сами или взять по чеку? Нужно около 10 литров.'],
         ]);
 
-        $tilda = Order::query()->where('title', 'like', 'Перенести сайт%')->firstOrFail();
-        app(CancelOrder::class)->handle($tilda->customer()->firstOrFail(), $tilda);
+        $lock = Order::query()->where('title', 'like', 'Поменять личинку%')->firstOrFail();
+        app(CancelOrder::class)->handle($lock->customer()->firstOrFail(), $lock);
     }
 
     private function user(string $name, string $email, UserRole $role, ?string $phone = null): User
@@ -192,10 +202,10 @@ class DemoSeeder extends Seeder
     }
 
     /** @param  list<string>  $tagNames */
-    private function executor(string $name, string $email, string $description, array $tagNames): User
+    private function executor(string $name, string $email, string $cityName, string $description, array $tagNames): User
     {
         $user = $this->user($name, $email, UserRole::Executor);
-        $user->executorProfile()->create(['description' => $description]);
+        $user->executorProfile()->create(['city_id' => $this->cities[$cityName]->id, 'description' => $description]);
         $user->categories()->attach(collect($tagNames)->map(fn (string $tag) => $this->tags[$tag]->id));
 
         return $user;
@@ -221,13 +231,13 @@ class DemoSeeder extends Seeder
         }
     }
 
-    private function approach(int $days): string
+    private function approach(): string
     {
         return collect([
-            'Изучу задачу и задам уточняющие вопросы в первый день.',
-            'Делал похожие проекты — примеры покажу в чате.',
-            'Разобью работу на этапы, промежуточный результат покажу через '.max(1, intdiv($days, 2)).' '.plural(max(1, intdiv($days, 2)), 'день', 'дня', 'дней').'.',
-            'Правки в рамках задачи — бесплатно, сдам с инструкцией.',
+            'Приеду, осмотрю и подтвержу цену на месте — если объём совпадает с описанием, начну сразу.',
+            'Делал много похожих работ — фото покажу в чате.',
+            'Свой инструмент, расходники могу закупить сам по чекам.',
+            'Даю гарантию на работу, после себя убираю.',
         ])->shuffle()->take(3)->implode(' ');
     }
 
