@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\Ai\LanguageModel;
+
 if (! function_exists('rub')) {
     /** 15000 → «15 000 ₽» (неразрывные пробелы, цены — целые рубли). */
     function rub(int $amount): string
@@ -23,5 +25,13 @@ if (! function_exists('plural')) {
             $mod10 >= 2 && $mod10 <= 4 => $few,
             default => $many,
         };
+    }
+}
+
+if (! function_exists('ai_enabled')) {
+    /** ИИ-провайдер настроен — показывать помощника и подсказки. */
+    function ai_enabled(): bool
+    {
+        return app(LanguageModel::class)->isAvailable();
     }
 }

@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Support\Ai\DisabledLanguageModel;
+use App\Support\Ai\GigaChat;
+use App\Support\Ai\LanguageModel;
+use App\Support\Ai\YandexGpt;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
@@ -13,7 +17,12 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // ИИ-провайдер для поиска по смыслу и помощника; без драйвера ИИ-функции скрыты.
+        $this->app->singleton(LanguageModel::class, fn () => match (config('ideajob.ai.driver')) {
+            'yandexgpt' => new YandexGpt(config('services.yandexgpt')),
+            'gigachat' => new GigaChat(config('services.gigachat')),
+            default => new DisabledLanguageModel,
+        });
     }
 
     public function boot(): void

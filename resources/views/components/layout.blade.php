@@ -38,6 +38,9 @@
                 @if ($user?->isCustomer())
                     <a href="{{ route('customer.orders.index') }}" class="{{ $navLink(request()->routeIs('customer.orders.index', 'customer.orders.show')) }}">Мои заказы</a>
                     <livewire:chat-nav-link :link-class="$navLink(request()->routeIs('chats.*'))" />
+                    @if (ai_enabled())
+                        <a href="{{ route('customer.assistant') }}" class="{{ $navLink(request()->routeIs('customer.assistant')) }}">ИИ-помощник</a>
+                    @endif
                 @elseif ($user?->isExecutor())
                     <a href="{{ route('executor.feed') }}" class="{{ $navLink(request()->routeIs('executor.feed')) }}">Лента заказов</a>
                     <a href="{{ route('executor.bids') }}" class="{{ $navLink(request()->routeIs('executor.bids')) }}">Мои предложения</a>
@@ -132,6 +135,11 @@
                         </span>
                     </a>
                     <livewire:chat-nav-link variant="tab" :link-class="$tabLink(request()->routeIs('chats.*'))" />
+                    @if (ai_enabled())
+                        <a href="{{ route('customer.assistant') }}" class="{{ $tabLink(request()->routeIs('customer.assistant')) }}">
+                            <x-heroicon-o-sparkles class="size-6" /> Помощник
+                        </a>
+                    @endif
                 @else
                     <a href="{{ route('executor.feed') }}" class="{{ $tabLink(request()->routeIs('executor.feed')) }}">
                         <x-heroicon-o-squares-2x2 class="size-6" /> Лента

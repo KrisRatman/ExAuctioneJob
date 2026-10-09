@@ -34,4 +34,31 @@ return [
 
     'demo' => (bool) env('IDEAJOB_DEMO', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | ИИ (RAG)
+    |--------------------------------------------------------------------------
+    |
+    | driver: yandexgpt | gigachat | null (выключено). Ключи — в config/services.php.
+    | Пороги сходства зависят от модели эмбеддингов: после смены драйвера
+    | их стоит подобрать заново и переиндексировать (php artisan ideajob:ai-index).
+    |
+    */
+
+    'ai' => [
+        'driver' => env('IDEAJOB_AI_DRIVER'),
+
+        // Подсказка тегов в форме заказа.
+        'tag_min_similarity' => (float) env('IDEAJOB_AI_TAG_MIN_SIMILARITY', 0.5),
+        'tag_suggestions' => 3,
+
+        // Поиск по смыслу в ленте исполнителя и похожие заказы для помощника.
+        'search_min_similarity' => (float) env('IDEAJOB_AI_SEARCH_MIN_SIMILARITY', 0.45),
+
+        // Помощник заказчика.
+        'assistant_history' => 8,
+        'assistant_similar_orders' => 5,
+        'assistant_per_hour' => (int) env('IDEAJOB_AI_ASSISTANT_PER_HOUR', 30),
+    ],
+
 ];

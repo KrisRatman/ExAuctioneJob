@@ -5,6 +5,7 @@ use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\HomeController;
 use App\Livewire\Chat\Index as ChatIndex;
 use App\Livewire\Chat\Show as ChatShow;
+use App\Livewire\Customer\Assistant;
 use App\Livewire\Customer\CreateOrder;
 use App\Livewire\Customer\OrderList;
 use App\Livewire\Customer\OrderShow;
@@ -32,6 +33,9 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/create', CreateOrder::class)->name('create');
         Route::livewire('/{order}', OrderShow::class)->name('show');
     });
+
+    // Заказчик: ИИ-помощник (только когда настроен ИИ-провайдер)
+    Route::livewire('/my/assistant', Assistant::class)->middleware('role:customer')->name('customer.assistant');
 
     // Исполнитель: лента подходящих заказов, свои предложения, анкета
     Route::middleware('role:executor')->group(function () {

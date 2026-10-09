@@ -4,7 +4,7 @@
             <label class="relative hidden w-72 sm:block">
                 <span class="sr-only">Поиск по заказам</span>
                 <x-heroicon-o-magnifying-glass class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
-                <input type="search" wire:model.live.debounce.400ms="search" placeholder="Поиск по заказам" class="input pl-10">
+                <input type="search" wire:model.live.debounce.400ms="search" placeholder="{{ ai_enabled() ? 'Поиск по смыслу: «не морозит»' : 'Поиск по заказам' }}" class="input pl-10">
             </label>
         </x-slot:actions>
     </x-page-header>
@@ -26,7 +26,7 @@
                 <label class="relative mb-3 block sm:hidden">
                     <span class="sr-only">Поиск по заказам</span>
                     <x-heroicon-o-magnifying-glass class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
-                    <input type="search" wire:model.live.debounce.400ms="search" placeholder="Поиск по заказам" class="input pl-10">
+                    <input type="search" wire:model.live.debounce.400ms="search" placeholder="{{ ai_enabled() ? 'Поиск по смыслу: «не морозит»' : 'Поиск по заказам' }}" class="input pl-10">
                 </label>
 
                 <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:card lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:p-2">

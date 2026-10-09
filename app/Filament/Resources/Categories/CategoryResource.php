@@ -10,6 +10,7 @@ use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -84,6 +85,12 @@ class CategoryResource extends Resource
                         ->integer()
                         ->minValue(0)
                         ->default(0),
+                    Textarea::make('keywords')
+                        ->label('Ключевые слова для ИИ')
+                        ->helperText('Как заказчики описывают такие задачи своими словами: «не морозит», «течёт кран». По ним ИИ подбирает теги и ищет заказы. Только для тегов.')
+                        ->rows(3)
+                        ->maxLength(1000)
+                        ->columnSpanFull(),
                 ]),
         ]);
     }

@@ -28,6 +28,29 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Yandex AI Studio: API-ключ сервисного аккаунта с ролью ai.languageModels.user и id каталога.
+    'yandexgpt' => [
+        'api_key' => env('YANDEXGPT_API_KEY'),
+        'folder_id' => env('YANDEXGPT_FOLDER_ID'),
+        'model' => env('YANDEXGPT_MODEL', 'yandexgpt-lite/latest'),
+        'temperature' => 0.3,
+        'max_tokens' => 1000,
+        'timeout' => 30,
+    ],
+
+    // GigaChat API: ключ авторизации (Basic) из личного кабинета Сбера.
+    'gigachat' => [
+        'auth_key' => env('GIGACHAT_AUTH_KEY'),
+        'scope' => env('GIGACHAT_SCOPE', 'GIGACHAT_API_PERS'),
+        'model' => env('GIGACHAT_MODEL', 'GigaChat'),
+        'embedding_model' => env('GIGACHAT_EMBEDDING_MODEL', 'Embeddings'),
+        // Сертификат НУЦ Минцифры (russian_trusted_root_ca.cer) — без него TLS не проходит.
+        'ca_bundle' => env('GIGACHAT_CA_BUNDLE'),
+        'temperature' => 0.3,
+        'max_tokens' => 1000,
+        'timeout' => 30,
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

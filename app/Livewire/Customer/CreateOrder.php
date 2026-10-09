@@ -5,6 +5,7 @@ namespace App\Livewire\Customer;
 use App\Actions\CreateOrder as CreateOrderAction;
 use App\Models\Category;
 use App\Models\City;
+use App\Support\Ai\SemanticIndex;
 use App\Support\TagRules;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -28,10 +29,70 @@ class CreateOrder extends Component
     /** @var list<int> */
     public array $categoryIds = [];
 
-    /** Город подставляется из прошлого заказа — обычно заказчик живёт там же. */
+    /**
+     * Город подставляется из прошлого заказа — обычно заказчик живёт там же.
+     * Если заказ начат в ИИ-помощнике, форма заполняется его черновиком.
+     */
     public function mount(): void
     {
         $this->cityId = auth()->user()->customerOrders()->latest('id')->value('city_id');
+
+        /** @var array{title?: string, description?: string, city_id?: ?int, category_ids?: list<int>}|null $draft */
+        $draft = session()->pull('order_draft');
+
+        if ($draft !== null) {
+            $this->title = $draft['title'] ?? '';
+            $this->description = $draft['description'] ?? '';
+            $this->cityId = $draft['city_id'] ?? $this->cityId;
+            $this->categoryIds = array_slice($draft['category_ids'] ?? [], 0, (int) config('ideajob.order_tags.max'));
+        }
+    }
+
+    /**
+     * Теги, близкие по смыслу к названию и описанию, — кроме уже выбранных.
+     * Сбой ИИ не мешает заполнить форму: подсказок просто нет.
+     *
+     * @return Collection<int, Category>
+     */
+    #[Computed]
+    public function suggestedTags(): Collection
+    {
+        $index = app(SemanticIndex::class);
+        $text = trim($this->title."\n".$this->description);
+
+        if (! $index->isEnabled() || mb_strlen($text) < 10) {
+            return new Collection;
+        }
+
+        $scores = rescue(fn () => $index->rank(
+            $text,
+            Category::class,
+            minSimilarity: (float) config('ideajob.ai.tag_min_similarity'),
+            limit: (int) config('ideajob.ai.tag_suggestions'),
+        ), []);
+
+        return Category::query()
+            ->tags()
+            ->with('parent')
+            ->whereKey(array_keys($scores))
+            ->whereKeyNot($this->categoryIds)
+            ->get()
+            ->sortByDesc(fn (Category $tag) => $scores[$tag->id])
+            ->values();
+    }
+
+    public function addTag(int $categoryId): void
+    {
+        // Чекбоксы присылают id строками.
+        $selected = array_map(intval(...), $this->categoryIds);
+
+        if (in_array($categoryId, $selected, true) || count($selected) >= (int) config('ideajob.order_tags.max')) {
+            return;
+        }
+
+        if (Category::query()->tags()->whereKey($categoryId)->exists()) {
+            $this->categoryIds[] = $categoryId;
+        }
     }
 
     /** @return Collection<int, Category> */

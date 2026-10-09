@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Observers\EmbeddingObserver;
+use App\Support\Ai\Embeddable;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,13 +16,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Задача заказчика. Пока статус open — принимает предложения исполнителей.
  */
 #[Fillable(['customer_id', 'executor_id', 'city_id', 'title', 'description', 'starting_price', 'status', 'accepted_at', 'delivered_at', 'completed_at', 'cancelled_at'])]
-class Order extends Model
+#[ObservedBy(EmbeddingObserver::class)]
+class Order extends Model implements Embeddable
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
@@ -109,6 +114,22 @@ class Order extends Model
     public function review(): HasOne
     {
         return $this->hasOne(Review::class);
+    }
+
+    /** @return MorphOne<Embedding, $this> */
+    public function embedding(): MorphOne
+    {
+        return $this->morphOne(Embedding::class, 'embeddable');
+    }
+
+    public function embeddingText(): ?string
+    {
+        return $this->title."\n".$this->description;
+    }
+
+    public function embeddingAttributes(): array
+    {
+        return ['title', 'description'];
     }
 
     public function isOpen(): bool

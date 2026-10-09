@@ -8,6 +8,7 @@ use App\Exceptions\AuctionException;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Order;
+use App\Support\Ai\SemanticIndex;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -93,15 +94,53 @@ class Feed extends Component
     {
         $search = trim($this->search);
 
-        return $this->visibleOrders()
-            ->when($this->tag, fn (Builder $q) => $q->whereHas('categories', fn (Builder $c) => $c->whereKey($this->tag)))
-            ->when($search !== '', fn (Builder $q) => $q->where(fn (Builder $w) => $w
+        $query = $this->visibleOrders()
+            ->when($this->tag, fn (Builder $q) => $q->whereHas('categories', fn (Builder $c) => $c->whereKey($this->tag)));
+
+        if ($search !== '') {
+            $scores = $this->semanticScores($search, $query->clone()->pluck('orders.id')->all());
+
+            // Совпадение слов или смысла; сначала самые близкие по смыслу.
+            $query->where(fn (Builder $w) => $w
                 ->where('title', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")))
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhereIn('orders.id', array_keys($scores)));
+
+            if ($scores !== []) {
+                // id — целые из базы, подставлять в SQL безопасно.
+                $ranks = collect(array_keys($scores))->map(fn (int $id, int $rank) => "when {$id} then {$rank}")->implode(' ');
+                $query->orderByRaw("case orders.id {$ranks} else ".count($scores).' end');
+            }
+        }
+
+        return $query
             ->with(['categories', 'customer', 'bids' => fn ($q) => $q->where('executor_id', auth()->id())])
             ->withCount('bids')
             ->latest()
             ->paginate(10);
+    }
+
+    /**
+     * Заказы из ленты, близкие к запросу по смыслу: «не морозит» найдёт «холодильник перестал охлаждать».
+     * ИИ выключен или недоступен — пусто, остаётся поиск по словам.
+     *
+     * @param  list<int>  $candidateIds
+     * @return array<int, float>
+     */
+    private function semanticScores(string $search, array $candidateIds): array
+    {
+        $index = app(SemanticIndex::class);
+
+        if (! $index->isEnabled() || $candidateIds === []) {
+            return [];
+        }
+
+        return rescue(fn () => $index->rank(
+            $search,
+            Order::class,
+            $candidateIds,
+            minSimilarity: (float) config('ideajob.ai.search_min_similarity'),
+        ), []);
     }
 
     #[Computed]

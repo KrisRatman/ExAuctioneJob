@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Observers\EmbeddingObserver;
+use App\Support\Ai\Embeddable;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,13 +15,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * Узел дерева: раздел (parent_id = null) или тег — подкатегория,
  * которую выбирают заказчик и исполнитель.
  */
-#[Fillable(['parent_id', 'name', 'slug', 'sort'])]
-class Category extends Model
+#[Fillable(['parent_id', 'name', 'slug', 'keywords', 'sort'])]
+#[ObservedBy(EmbeddingObserver::class)]
+class Category extends Model implements Embeddable
 {
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
@@ -54,6 +59,29 @@ class Category extends Model
     public function isTag(): bool
     {
         return $this->parent_id !== null;
+    }
+
+    /** @return MorphOne<Embedding, $this> */
+    public function embedding(): MorphOne
+    {
+        return $this->morphOne(Embedding::class, 'embeddable');
+    }
+
+    /** Индексируются только теги: разделы не выбирают. Ключевые слова — как задачу описывают заказчики. */
+    public function embeddingText(): ?string
+    {
+        if (! $this->isTag()) {
+            return null;
+        }
+
+        $this->loadMissing('parent');
+
+        return trim($this->parent->name.': '.$this->name.'. '.$this->keywords);
+    }
+
+    public function embeddingAttributes(): array
+    {
+        return ['name', 'keywords', 'parent_id'];
     }
 
     /** @param  Builder<Category>  $query */
