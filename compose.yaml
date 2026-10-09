@@ -1,0 +1,113 @@
+# Локальный стек IdeaJob: сайт, воркер очереди, Reverb (WebSocket) и MySQL.
+# Запуск: docker compose up -d --build → http://localhost:8000
+# Демо-доступы (пароль у всех — password): customer@, executor@, admin@example.com; админка — /admin
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ideajob
+      MYSQL_USER: ideajob
+      MYSQL_PASSWORD: ${DOCKER_DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DOCKER_DB_ROOT_PASSWORD:-secret}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DOCKER_DB_ROOT_PASSWORD:-secret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  app:
+    image: ideajob:local
+    build:
+      context: .
+      args:
+        # Адрес Reverb, к которому подключается браузер. Вшивается в JS при сборке:
+        # после изменения — docker compose build.
+        VITE_REVERB_APP_KEY: ${REVERB_APP_KEY:-ideajob-local-key}
+        VITE_REVERB_HOST: ${REVERB_PUBLIC_HOST:-localhost}
+        VITE_REVERB_PORT: ${REVERB_PUBLIC_PORT:-8080}
+        VITE_REVERB_SCHEME: http
+    command: ["serve"]
+    environment: &app-env
+      APP_NAME: IdeaJob
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      # Пустой ключ допустим: entrypoint сгенерирует его и положит в общий том.
+      APP_KEY: ${APP_KEY:-}
+      APP_URL: http://localhost:${APP_PORT:-8000}
+      APP_LOCALE: ru
+      APP_FALLBACK_LOCALE: en
+      APP_FAKER_LOCALE: ru_RU
+      DB_HOST: mysql
+      DB_DATABASE: ideajob
+      DB_USERNAME: ideajob
+      DB_PASSWORD: ${DOCKER_DB_PASSWORD:-secret}
+      # Сервер шлёт события в Reverb по внутренней сети Docker.
+      REVERB_APP_ID: ${REVERB_APP_ID:-ideajob}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:-ideajob-local-key}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:-ideajob-local-secret}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      # Кнопки входа в демо-аккаунты на странице входа.
+      IDEAJOB_DEMO: ${IDEAJOB_DEMO:-true}
+      # ИИ (RAG): yandexgpt | gigachat | пусто — выключено.
+      IDEAJOB_AI_DRIVER: ${IDEAJOB_AI_DRIVER:-}
+      YANDEXGPT_API_KEY: ${YANDEXGPT_API_KEY:-}
+      YANDEXGPT_FOLDER_ID: ${YANDEXGPT_FOLDER_ID:-}
+      GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
+      GIGACHAT_CA_BUNDLE: ${GIGACHAT_CA_BUNDLE:-}
+    volumes: &app-volumes
+      - app-storage:/app/storage/app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  queue:
+    image: ideajob:local
+    command: ["queue"]
+    environment: *app-env
+    volumes: *app-volumes
+    # Healthcheck базового образа стучится по HTTP, а воркер порт не слушает:
+    # проверяем, что на PID 1 работает именно queue:work (его запускает entrypoint через exec).
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'queue:work' /proc/1/cmdline"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+    restart: unless-stopped
+
+  reverb:
+    image: ideajob:local
+    command: ["reverb"]
+    environment: *app-env
+    volumes: *app-volumes
+    ports:
+      - "${REVERB_PUBLIC_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'reverb:start' /proc/1/cmdline"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  app-storage:

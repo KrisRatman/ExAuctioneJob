@@ -34,7 +34,7 @@
 
 ## Стек
 
-Laravel 13 · PHP 8.4 · MySQL 8 · Livewire 4 · Filament 5 · Tailwind CSS 4 · Laravel Reverb + Laravel Echo · Pest 5
+Laravel 13 · PHP 8.4 · MySQL 8 · Livewire 4 · Filament 5 · Tailwind CSS 4 · Laravel Reverb + Laravel Echo · Pest 5 · Docker (FrankenPHP)
 
 ## Как устроено
 
@@ -83,7 +83,50 @@ open ──(заказчик принял предложение)──▶ in_pr
   <img src="docs/screenshots/10-mobile-chat.png" width="260" alt="Чат на телефоне">
 </p>
 
-## Запуск локально
+## Запуск в Docker
+
+Нужен только Docker (на Windows и macOS — Docker Desktop). Порты 8000 и 8080 должны быть свободны.
+
+```bash
+git clone https://github.com/KrisRatman/ExAuctioneJob.git ideajob
+cd ideajob
+docker compose up -d --build
+```
+
+Первая сборка занимает несколько минут. Когда `docker compose ps` покажет все контейнеры `healthy`, сайт открыт на http://localhost:8000, админка — на http://localhost:8000/admin. База создаётся и заполняется демо-данными сама, `.env` создавать не нужно.
+
+Демо-аккаунты (на странице входа есть кнопки «Войти как заказчик / исполнитель»):
+
+| Роль | Email | Пароль |
+|---|---|---|
+| Заказчик | `customer@example.com` | `password` |
+| Исполнитель | `executor@example.com` | `password` |
+| Администратор (`/admin`) | `admin@example.com` | `password` |
+
+| Контейнер | Что делает |
+|---|---|
+| `app` | Сайт и админка (FrankenPHP), при старте — миграции и сидеры |
+| `queue` | Воркер очереди: уведомления |
+| `reverb` | WebSocket-сервер на порту 8080 — чат и колокольчик без перезагрузки |
+| `mysql` | MySQL 8.4, данные в томе `mysql-data` |
+
+Если порты заняты, задайте другие в файле `.env` рядом с `compose.yaml` и пересоберите (`docker compose up -d --build`):
+
+```dotenv
+APP_PORT=8001
+REVERB_PUBLIC_PORT=8081
+```
+
+Полезные команды:
+
+```bash
+docker compose logs -f app                                 # логи сайта
+docker compose exec app php artisan migrate:fresh --seed --force   # сбросить демо-данные
+docker compose down                                        # остановить (данные сохраняются)
+docker compose down -v                                     # остановить и удалить базу
+```
+
+## Запуск без Docker
 
 Нужны PHP 8.4 (расширения `intl`, `pdo_mysql`), Composer, Node.js 20+ и MySQL 8.
 
