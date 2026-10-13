@@ -34,6 +34,9 @@ return [
 
     'demo' => (bool) env('IDEAJOB_DEMO', false),
 
+    // На виртуальном хостинге нет постоянных процессов: очередь разбирает cron через планировщик.
+    'scheduled_queue_worker' => (bool) env('IDEAJOB_SCHEDULED_QUEUE_WORKER', false),
+
     /*
     |--------------------------------------------------------------------------
     | ИИ (RAG)
